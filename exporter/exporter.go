@@ -175,6 +175,20 @@ func Start(client rpc.Client) error {
 		}
 	}
 
+	if utils.Config.Indexer.EpochOnly {
+		for true {
+			time.Sleep(time.Second * 10)
+			head, err := client.GetChainHead()
+			if err != nil {
+				logger.Fatal(err)
+			}
+			startEpoch := head.HeadEpoch - 10
+			err = updateEpochStatus(client, startEpoch, head.HeadEpoch)
+			if err != nil {
+				logger.Fatal(err)
+			}
+		}
+	}
 	for true {
 		time.Sleep(time.Second * 10)
 		logger.Infof("checking for new blocks/epochs to export")
@@ -261,7 +275,7 @@ func Start(client rpc.Client) error {
 			}
 		} else if len(epochs) > 0 && epochs[0] != 0 { // Export the genesis epoch if not yet present in the db
 			epochsToExport[0] = true
-		} else if len(epochs) == 0 { // No epochs are present int the db
+		} else if len(epochs) == 0 { // No epochs are present in the db
 			for i := uint64(0); i <= head.HeadEpoch; i++ {
 				epochsToExport[i] = true
 			}
