@@ -176,6 +176,7 @@ func Start(client rpc.Client) error {
 	}
 
 	if utils.Config.Indexer.EpochOnly {
+		logger.Infof("running in epoch only emergency mode")
 		for true {
 			time.Sleep(time.Second * 10)
 			head, err := client.GetChainHead()
@@ -183,12 +184,14 @@ func Start(client rpc.Client) error {
 				logger.Fatal(err)
 			}
 			startEpoch := head.HeadEpoch - 10
+			logger.Infof("exporting epoch data for epochs %v - %v", startEpoch, head.HeadEpoch)
 			err = updateEpochStatus(client, startEpoch, head.HeadEpoch)
 			if err != nil {
 				logger.Fatal(err)
 			}
 		}
 	}
+
 	for true {
 		time.Sleep(time.Second * 10)
 		logger.Infof("checking for new blocks/epochs to export")
