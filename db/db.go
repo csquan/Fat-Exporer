@@ -1087,10 +1087,30 @@ func saveBlocks(epoch uint64, blocks map[uint64]map[string]*types.Block, tx *sql
 // UpdateEpochStatus will update the epoch status in the database
 func UpdateEpochStatus(stats *types.ValidatorParticipation) error {
 	_, err := DB.Exec(`
-		INSERT INTO epochs (epoch, finalized, eligibleether, globalparticipationrate, votedether) VALUES ($1, $2, $3, $4, $5) ON CONFLICT 
-		(epoch) DO UPDATE SET finalized = excluded.finalized, eligibleether = excluded.eligibleether, globalparticipationrate = excluded.globalparticipationrate,
-		                      votedether = excluded.votedether;`,
-		stats.Epoch, stats.Finalized, stats.EligibleEther, stats.GlobalParticipationRate, stats.VotedEther, stats.Epoch)
+INSERT INTO epochs (
+			epoch, 
+			blockscount, 
+			proposerslashingscount, 
+			attesterslashingscount, 
+			attestationscount, 
+			depositscount, 
+			voluntaryexitscount, 
+			validatorscount, 
+			averagevalidatorbalance, 
+			totalvalidatorbalance,
+			finalized, 
+			eligibleether, 
+			globalparticipationrate, 
+			votedether
+		)
+		VALUES ($1, 0, 0, 0, 0, 0, 0, 0, 0, 0, $2, $3, $4, $5) 
+		ON CONFLICT (epoch) DO UPDATE SET 
+			finalized               = excluded.finalized,
+			eligibleether           = excluded.eligibleether,
+			globalparticipationrate = excluded.globalparticipationrate,
+			votedether              = excluded.votedether;
+		`,
+		stats.Epoch, stats.Finalized, stats.EligibleEther, stats.GlobalParticipationRate, stats.VotedEther)
 
 	return err
 }
