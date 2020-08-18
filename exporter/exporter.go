@@ -183,7 +183,7 @@ func Start(client rpc.Client) error {
 			if err != nil {
 				logger.Fatal(err)
 			}
-			startEpoch := head.HeadEpoch - 1
+			startEpoch := head.HeadEpoch
 			logger.Infof("exporting epoch data for epochs %v - %v", startEpoch, head.HeadEpoch)
 			err = updateEpochStatus(client, startEpoch, head.HeadEpoch)
 			if err != nil {
