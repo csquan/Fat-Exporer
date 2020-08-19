@@ -175,6 +175,21 @@ func Start(client rpc.Client) error {
 		}
 	}
 
+	if utils.Config.Indexer.StartEpoch > 0 {
+		head, err := client.GetChainHead()
+		if err != nil {
+			logger.Fatal(err)
+		}
+
+		for i := utils.Config.Indexer.StartEpoch; i <= head.HeadEpoch; i++ {
+			err = ExportEpoch(i, client)
+
+			if err != nil {
+				logger.Errorf("error exporting epoch: %v", err)
+			}
+		}
+	}
+
 	if utils.Config.Indexer.EpochOnly {
 		logger.Infof("running in epoch only emergency mode")
 		for true {

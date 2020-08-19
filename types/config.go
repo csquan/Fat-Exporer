@@ -18,12 +18,13 @@ type Config struct {
 		GenesisDelay                   uint64 `yaml:"genesisDelay" envconfig:"CHAIN_GENESIS_DELAY"`
 	} `yaml:"chain"`
 	Indexer struct {
-		Enabled                     bool `yaml:"enabled" envconfig:"INDEXER_ENABLED"`
-		EpochOnly                   bool `yaml:"epochOnly" envconfig:"INDEXER_EPOCH_ONLY"`
-		FullIndexOnStartup          bool `yaml:"fullIndexOnStartup" envconfig:"INDEXER_FULL_INDEX_ON_STARTUP"`
-		IndexMissingEpochsOnStartup bool `yaml:"indexMissingEpochsOnStartup" envconfig:"INDEXER_MISSING_INDEX_ON_STARTUP"`
-		CheckAllBlocksOnStartup     bool `yaml:"checkAllBlocksOnStartup" envconfig:"INDEXER_CHECK_ALL_BLOCKS_ON_STARTUP"`
-		UpdateAllEpochStatistics    bool `yaml:"updateAllEpochStatistics" envconfig:"INDEXER_UPDATE_ALL_EPOCH_STATISTICS"`
+		Enabled                     bool   `yaml:"enabled" envconfig:"INDEXER_ENABLED"`
+		EpochOnly                   bool   `yaml:"epochOnly" envconfig:"INDEXER_EPOCH_ONLY"`
+		FullIndexOnStartup          bool   `yaml:"fullIndexOnStartup" envconfig:"INDEXER_FULL_INDEX_ON_STARTUP"`
+		IndexMissingEpochsOnStartup bool   `yaml:"indexMissingEpochsOnStartup" envconfig:"INDEXER_MISSING_INDEX_ON_STARTUP"`
+		CheckAllBlocksOnStartup     bool   `yaml:"checkAllBlocksOnStartup" envconfig:"INDEXER_CHECK_ALL_BLOCKS_ON_STARTUP"`
+		UpdateAllEpochStatistics    bool   `yaml:"updateAllEpochStatistics" envconfig:"INDEXER_UPDATE_ALL_EPOCH_STATISTICS"`
+		StartEpoch                  uint64 `yaml:"startEpoch"`
 		Node                        struct {
 			Port     string `yaml:"port" envconfig:"INDEXER_NODE_PORT"`
 			Host     string `yaml:"host" envconfig:"INDEXER_NODE_HOST"`
