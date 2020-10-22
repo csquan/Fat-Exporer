@@ -47,6 +47,7 @@ func main() {
 	}
 
 	if cfg.OneTimeExport.Enabled {
+		t0 := time.Now()
 		var rpcClient rpc.Client
 
 		if utils.Config.Indexer.Node.Type == "prysm" {
@@ -67,12 +68,25 @@ func main() {
 			logrus.Fatalf("invalid note type %v specified. supported node types are prysm and lighthouse", utils.Config.Indexer.Node.Type)
 		}
 
-		for epoch := cfg.OneTimeExport.StartEpoch; epoch <= cfg.OneTimeExport.EndEpoch; epoch++ {
-			err := exporter.ExportEpoch(epoch, rpcClient)
-			if err != nil {
-				logrus.Fatal(err)
+		if len(cfg.OneTimeExport.Epochs) > 0 {
+			logrus.WithField("epochs", cfg.OneTimeExport.Epochs).Info("exporting epochs onetime")
+			for _, epoch := range cfg.OneTimeExport.Epochs {
+				err := exporter.ExportEpoch(epoch, rpcClient)
+				if err != nil {
+					logrus.Fatal(err)
+				}
+			}
+		} else {
+			logrus.WithField("startEpoch", cfg.OneTimeExport.StartEpoch).WithField("endEpoch", cfg.OneTimeExport.EndEpoch).Info("exporting epochs onetime")
+			for epoch := cfg.OneTimeExport.StartEpoch; epoch <= cfg.OneTimeExport.EndEpoch; epoch++ {
+				err := exporter.ExportEpoch(epoch, rpcClient)
+				if err != nil {
+					logrus.Fatal(err)
+				}
 			}
 		}
+
+		logrus.Infof("finised exporting epochs onetime in %v: %+v", time.Since(t0), cfg.OneTimeExport)
 
 		return
 	}
