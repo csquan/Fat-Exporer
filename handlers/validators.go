@@ -96,29 +96,29 @@ func parseValidatorsDataQueryParams(r *http.Request) (*ValidatorsDataQueryParams
 	var qryStateFilter string
 	switch filterByState {
 	case "pending":
-		qryStateFilter = "AND a.state LIKE 'pending%'"
+		qryStateFilter = "AND validators.status LIKE 'pending%'"
 	case "active":
-		qryStateFilter = "AND a.state LIKE 'active%'"
+		qryStateFilter = "AND validators.status LIKE 'active%'"
 	case "active_online":
-		qryStateFilter = "AND a.state = 'active_online'"
+		qryStateFilter = "AND validators.status = 'active_online'"
 	case "active_offline":
-		qryStateFilter = "AND a.state = 'active_offline'"
+		qryStateFilter = "AND validators.status = 'active_offline'"
 	case "slashing":
-		qryStateFilter = "AND a.state LIKE 'slashing%'"
+		qryStateFilter = "AND validators.status LIKE 'slashing%'"
 	case "slashing_online":
-		qryStateFilter = "AND a.state = 'slashing_online'"
+		qryStateFilter = "AND validators.status = 'slashing_online'"
 	case "slashing_offline":
-		qryStateFilter = "AND a.state = 'slashing_offline'"
+		qryStateFilter = "AND validators.status = 'slashing_offline'"
 	case "slashed":
-		qryStateFilter = "AND a.state = 'slashed'"
+		qryStateFilter = "AND validators.status = 'slashed'"
 	case "exiting":
-		qryStateFilter = "AND a.state LIKE 'exiting%'"
+		qryStateFilter = "AND validators.status LIKE 'exiting%'"
 	case "exiting_online":
-		qryStateFilter = "AND a.state = 'exiting_online'"
+		qryStateFilter = "AND validators.status = 'exiting_online'"
 	case "exiting_offline":
-		qryStateFilter = "AND a.state = 'exiting_offline'"
+		qryStateFilter = "AND validators.status = 'exiting_offline'"
 	case "exited":
-		qryStateFilter = "AND a.state = 'exited'"
+		qryStateFilter = "AND validators.status = 'exited'"
 	default:
 		qryStateFilter = ""
 	}
