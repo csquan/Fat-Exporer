@@ -395,7 +395,7 @@ func ExportEpoch(epoch uint64, client rpc.Client) error {
 
 	defer func() {
 		dataSavingDuration = time.Since(savingStart)
-		logger.Infof("export of epoch %v completed, took %v (%v for retrieval, %v for saving", epoch, time.Since(retrievalStart), dataRetrievalDuration, dataSavingDuration)
+		logger.Infof("export of epoch %v completed, took %v (%v for retrieval, %v for saving)", epoch, time.Since(retrievalStart), dataRetrievalDuration, dataSavingDuration)
 	}()
 
 	logger.Printf("retrieving data for epoch %v", epoch)
