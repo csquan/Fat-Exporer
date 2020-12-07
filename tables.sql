@@ -70,7 +70,7 @@ create table proposal_assignments
     validatorindex int not null,
     proposerslot   int not null,
     status         int not null, /* Can be 0 = scheduled, 1 executed, 2 missed */
-    primary key (epoch, validatorindex, proposerslot)
+    primary key (epoch, validatorindex)
 );
 create index idx_proposal_assignments_epoch on proposal_assignments (epoch);
 
@@ -83,7 +83,7 @@ create table attestation_assignments
     committeeindex int not null,
     status         int not null, /* Can be 0 = scheduled, 1 executed, 2 missed */
     inclusionslot  int not null default 0, /* Slot this attestation was included for the first time */
-    primary key (epoch, validatorindex, attesterslot, committeeindex)
+    primary key (epoch, validatorindex)
 );
 create index idx_attestation_assignments_validatorindex on attestation_assignments (validatorindex);
 create index idx_attestation_assignments_epoch on attestation_assignments (epoch);

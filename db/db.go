@@ -813,7 +813,7 @@ func saveValidatorProposalAssignments(epoch uint64, assignments map[uint64]uint6
 	stmt, err := tx.Prepare(`
 		INSERT INTO proposal_assignments (epoch, validatorindex, proposerslot, status)
 		VALUES ($1, $2, $3, $4)
-		ON CONFLICT (epoch, validatorindex, proposerslot) DO NOTHING`)
+		ON CONFLICT (epoch, validatorindex) DO UPDATE SET proposerslot = EXCLUDED.proposerslot`)
 	if err != nil {
 		return err
 	}
@@ -854,7 +854,7 @@ func saveValidatorAttestationAssignments(epoch uint64, assignments map[string]ui
 		stmt := fmt.Sprintf(`
 		INSERT INTO attestation_assignments (epoch, validatorindex, attesterslot, committeeindex, status)
 		VALUES %s
-		ON CONFLICT (epoch, validatorindex, attesterslot, committeeindex) DO NOTHING`, strings.Join(valueStrings, ","))
+		ON CONFLICT (epoch, validatorindex) DO UPDATE SET attesterslot = EXCLUDED.attesterslot, committeeindex = EXCLUDED.committeeindex`, strings.Join(valueStrings, ","))
 		_, err := tx.Exec(stmt, valueArgs...)
 		if err != nil {
 			return fmt.Errorf("error executing save validator attestation assignment statement: %v", err)
@@ -957,7 +957,7 @@ func saveBlocks(epoch uint64, blocks map[uint64]map[string]*types.Block, tx *sql
 	stmtProposalAssignments, err := tx.Prepare(`
 		INSERT INTO proposal_assignments (epoch, validatorindex, proposerslot, status)
 		VALUES ($1, $2, $3, $4)
-		ON CONFLICT (epoch, validatorindex, proposerslot) DO UPDATE SET status = excluded.status`)
+		ON CONFLICT (epoch, validatorindex) DO UPDATE SET status = excluded.status`)
 	if err != nil {
 		return err
 	}
@@ -1076,7 +1076,7 @@ func saveBlocks(epoch uint64, blocks map[uint64]map[string]*types.Block, tx *sql
 					stmt := fmt.Sprintf(`
 						INSERT INTO attestation_assignments (epoch, validatorindex, attesterslot, committeeindex, status, inclusionslot)
 						VALUES %s
-						ON CONFLICT (epoch, validatorindex, attesterslot, committeeindex) DO UPDATE SET status = excluded.status, inclusionslot = LEAST((CASE WHEN attestation_assignments.inclusionslot = 0 THEN null ELSE attestation_assignments.inclusionslot END), excluded.inclusionslot)`, strings.Join(valueStrings, ","))
+						ON CONFLICT (epoch, validatorindex) DO UPDATE SET status = excluded.status, inclusionslot = LEAST((CASE WHEN attestation_assignments.inclusionslot = 0 THEN null ELSE attestation_assignments.inclusionslot END), excluded.inclusionslot)`, strings.Join(valueStrings, ","))
 					_, err := tx.Exec(stmt, valueArgs...)
 					if err != nil {
 						return fmt.Errorf("error executing stmtAttestationAssignments for block %v: %v", b.Slot, err)
