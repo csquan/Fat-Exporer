@@ -388,9 +388,14 @@ func GetLastBlocks(startEpoch, endEpoch uint64, client rpc.Client) ([]*types.Min
 
 // ExportEpoch will export an epoch from rpc into the database
 func ExportEpoch(epoch uint64, client rpc.Client) error {
-	start := time.Now()
+	retrievalStart := time.Now()
+	savingStart := time.Now()
+	var dataRetrievalDuration time.Duration
+	var dataSavingDuration time.Duration
+
 	defer func() {
-		logger.Infof("export of epoch %v completed, took %v", epoch, time.Since(start))
+		dataSavingDuration = time.Since(savingStart)
+		logger.Infof("export of epoch %v completed, took %v (%v for retrieval, %v for saving", epoch, time.Since(retrievalStart), dataRetrievalDuration, dataSavingDuration)
 	}()
 
 	logger.Printf("retrieving data for epoch %v", epoch)
@@ -400,8 +405,10 @@ func ExportEpoch(epoch uint64, client rpc.Client) error {
 		return fmt.Errorf("error retrieving epoch data: %v", err)
 	}
 
-	logger.Printf("data for epoch %v retrieved, took %v", epoch, time.Since(start))
+	dataRetrievalDuration = time.Since(retrievalStart)
+	logger.Printf("data for epoch %v retrieved, took %v", epoch, dataRetrievalDuration)
 
+	savingStart = time.Now()
 	if len(data.Validators) == 0 {
 		return fmt.Errorf("error retrieving epoch data: no validators received for epoch")
 	}
