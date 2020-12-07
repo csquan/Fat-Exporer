@@ -230,8 +230,6 @@ func (pc *PrysmClient) GetEpochData(epoch uint64) (*types.EpochData, error) {
 	data := &types.EpochData{}
 	data.Epoch = epoch
 
-	data.ValidatorIndices = make(map[string]uint64)
-
 	// Retrieve the validator balances for the epoch (NOTE: Currently the API call is broken and allows only to retrieve the balances for the current epoch
 	validatorBalancesByPubkey := make(map[string]uint64)
 
@@ -252,7 +250,6 @@ func (pc *PrysmClient) GetEpochData(epoch uint64) (*types.EpochData, error) {
 		}
 
 		for _, balance := range validatorBalancesResponse.Balances {
-			data.ValidatorIndices[fmt.Sprintf("%x", balance.PublicKey)] = balance.Index
 			validatorBalancesByPubkey[fmt.Sprintf("%x", balance.PublicKey)] = balance.Balance
 		}
 
@@ -283,6 +280,7 @@ func (pc *PrysmClient) GetEpochData(epoch uint64) (*types.EpochData, error) {
 				data.Blocks[block.Slot] = make(map[string]*types.Block)
 			}
 			data.Blocks[block.Slot][fmt.Sprintf("%x", block.BlockRoot)] = block
+
 		}
 	}
 	logger.Printf("retrieved %v blocks for epoch %v", len(data.Blocks), epoch)

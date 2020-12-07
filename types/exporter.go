@@ -24,7 +24,6 @@ type ChainHead struct {
 type EpochData struct {
 	Epoch                   uint64
 	Validators              []*Validator
-	ValidatorIndices        map[string]uint64
 	ValidatorAssignmentes   *EpochAssignments
 	BeaconCommittees        map[uint64][]*BeaconCommitteItem
 	Blocks                  map[uint64]map[string]*Block
