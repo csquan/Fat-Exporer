@@ -534,9 +534,6 @@ func SaveEpoch(data *types.EpochData) error {
 	}
 	defer tx.Rollback()
 
-	logger.Infof("starting export of epoch %v", data.Epoch)
-	start := time.Now()
-
 	logger.Infof("exporting block data")
 	err = saveBlocks(data.Epoch, data.Blocks, tx)
 	if err != nil {
@@ -656,7 +653,6 @@ func SaveEpoch(data *types.EpochData) error {
 		return fmt.Errorf("error committing db transaction: %v", err)
 	}
 
-	logger.Infof("export of epoch %v completed, took %v", data.Epoch, time.Since(start))
 	return nil
 }
 

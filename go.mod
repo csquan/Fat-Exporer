@@ -15,7 +15,6 @@ require (
 	github.com/ethereum/go-ethereum v1.9.14
 	github.com/go-openapi/spec v0.19.12 // indirect
 	github.com/gogo/protobuf v1.3.1
-	github.com/google/go-querystring v1.0.0
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/csrf v1.7.0
 	github.com/gorilla/mux v1.7.3
@@ -50,7 +49,6 @@ require (
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
 	golang.org/x/text v0.3.4
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
-	google.golang.org/api v0.36.0
 	google.golang.org/grpc v1.33.2
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/yaml.v2 v2.3.0
