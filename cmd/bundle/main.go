@@ -12,6 +12,10 @@ import (
 	"github.com/evanw/esbuild/pkg/api"
 )
 
+var cssVendor = []string{"/css/layout.css", "/css/fontawesome.min.css", "/css/layout/toggle.css", "/css/layout/banner.css"}
+
+var jsVendor = []string{"/bundle/js/jquery.min.js", "/bundle/js/popper.min.js", "/theme/js/bootstrap.min.js", "/bundle/js/luxon.min.js", "/bundle/js/typeahead.bundle.min.js", "/bundle/js/layout.js", "/bundle/js/banner.js", "/bundle/js/clipboard.min.js", "/bundle/js/instant.min.js", "/bundle/js/revive.min.js"}
+
 func bundle(staticDir string) error {
 	if staticDir == "" {
 		staticDir = "./static"
@@ -55,6 +59,7 @@ func bundle(staticDir string) error {
 				MinifyWhitespace:  true,
 				MinifyIdentifiers: false,
 				MinifySyntax:      true,
+				Target:            api.ES2016,
 			},
 		},
 	}
@@ -97,8 +102,79 @@ func bundle(staticDir string) error {
 	return nil
 }
 
+func vendorJS(staticDir string) error {
+
+	jsCode := make([]byte, 0)
+	for _, filePath := range jsVendor {
+		code, err := ioutil.ReadFile(path.Join(staticDir, filePath))
+		if err != nil {
+			return fmt.Errorf("error reading file %v", err)
+		}
+		jsCode = append(jsCode, code...)
+		jsCode = append(jsCode, byte('\n'))
+	}
+
+	result := api.Transform(string(jsCode), api.TransformOptions{
+		Loader:            api.LoaderJS,
+		MinifyWhitespace:  true,
+		MinifyIdentifiers: true,
+		MinifySyntax:      true,
+		Target:            api.ES2016,
+	})
+
+	if len(result.Errors) > 0 {
+		return fmt.Errorf("error occured creating js vendor bundle %v", result.Errors)
+	}
+
+	err := ioutil.WriteFile(path.Join(staticDir, "bundle", "vendor.js"), result.Code, 0755)
+	if err != nil {
+		return fmt.Errorf("error failed to write file %v", err)
+	}
+
+	return nil
+}
+
+func vendorCSS(staticDir string) error {
+
+	jsCode := make([]byte, 0)
+	for _, filePath := range cssVendor {
+		code, err := ioutil.ReadFile(path.Join(staticDir, filePath))
+		if err != nil {
+			return fmt.Errorf("error reading file %v", err)
+		}
+		jsCode = append(jsCode, code...)
+		jsCode = append(jsCode, byte('\n'))
+	}
+
+	result := api.Transform(string(jsCode), api.TransformOptions{
+		Loader:            api.LoaderCSS,
+		MinifyWhitespace:  true,
+		MinifyIdentifiers: true,
+		MinifySyntax:      true,
+	})
+
+	if len(result.Errors) > 0 {
+		return fmt.Errorf("error occured creating js vendor bundle %v", result.Errors)
+	}
+
+	err := ioutil.WriteFile(path.Join(staticDir, "bundle", "vendor.css"), result.Code, 0755)
+	if err != nil {
+		return fmt.Errorf("error failed to write file %v", err)
+	}
+
+	return nil
+}
+
 func main() {
 	if err := bundle("./static"); err != nil {
 		log.Fatal("error bundling: ", err)
+	}
+
+	if err := vendorJS("./static"); err != nil {
+		log.Fatal("error creating vendor files", err)
+	}
+
+	if err := vendorCSS("./static"); err != nil {
+		log.Fatal("error creating vendor files", err)
 	}
 }
