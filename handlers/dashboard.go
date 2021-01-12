@@ -52,6 +52,7 @@ func parseValidatorsFromQueryString(str string) ([]uint64, error) {
 	return validators, nil
 }
 
+//Dashboard handler
 func Dashboard(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 
@@ -69,6 +70,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//DashboardDataBalance handler
 func DashboardDataBalance(w http.ResponseWriter, r *http.Request) {
 	currency := GetCurrency(r)
 
@@ -135,6 +137,7 @@ func DashboardDataBalance(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DashboardDataProposals handler
 func DashboardDataProposals(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -179,6 +182,7 @@ func DashboardDataProposals(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DashboardDataMissedAttestations handler
 func DashboardDataMissedAttestations(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -234,6 +238,7 @@ func DashboardDataMissedAttestations(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DashboardDataValidators handler
 func DashboardDataValidators(w http.ResponseWriter, r *http.Request) {
 	currency := GetCurrency(r)
 
@@ -367,6 +372,7 @@ func DashboardDataValidators(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DashboardDataEarnings handler
 func DashboardDataEarnings(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

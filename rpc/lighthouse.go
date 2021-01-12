@@ -33,6 +33,7 @@ func NewLighthouseClient(endpoint string) (*LighthouseClient, error) {
 	return client, nil
 }
 
+// GetNewBlockChan is not yet implemented
 func (lc *LighthouseClient) GetNewBlockChan() chan *types.Block {
 	return nil
 }

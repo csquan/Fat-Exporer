@@ -11,6 +11,7 @@ import (
 
 var advertisewithusTemplate = template.Must(template.New("advertisewithus").Funcs(utils.GetTemplateFuncs()).ParseFiles("templates/layout.html", "templates/advertisewithus.html"))
 
+// AdvertiseWithUs handler
 func AdvertiseWithUs(w http.ResponseWriter, r *http.Request) {
 	var err error
 
@@ -35,6 +36,7 @@ func AdvertiseWithUs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//AdvertiseWithUsPost handler
 func AdvertiseWithUsPost(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {

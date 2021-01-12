@@ -96,6 +96,7 @@ func (pc *PrysmClient) Close() {
 	pc.conn.Close()
 }
 
+// GetNewBlockChan returns a channel that emits new blocks
 func (pc *PrysmClient) GetNewBlockChan() chan *types.Block {
 	return pc.newBlockChan
 }
@@ -480,7 +481,7 @@ func (pc *PrysmClient) GetBlocksBySlot(slot uint64) ([]*types.Block, error) {
 			}
 		}
 
-		b, err := pc.parseRpcBlock(block)
+		b, err := pc.parseRPCBlock(block)
 		if err != nil {
 			return nil, err
 		}
@@ -491,7 +492,7 @@ func (pc *PrysmClient) GetBlocksBySlot(slot uint64) ([]*types.Block, error) {
 	return blocks, nil
 }
 
-func (pc *PrysmClient) parseRpcBlock(block *ethpb.BeaconBlockContainer) (*types.Block, error) {
+func (pc *PrysmClient) parseRPCBlock(block *ethpb.BeaconBlockContainer) (*types.Block, error) {
 	b := &types.Block{
 		Status:       1,
 		BlockRoot:    block.BlockRoot,

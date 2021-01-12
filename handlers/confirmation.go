@@ -8,7 +8,7 @@ import (
 
 var confirmationTemplate = template.Must(template.New("confirmation").Funcs(utils.GetTemplateFuncs()).ParseFiles("templates/layout.html", "templates/confirmation.html"))
 
-// Blocks will return information about blocks using a go template
+// Confirmation handler
 func Confirmation(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 

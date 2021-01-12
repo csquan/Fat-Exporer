@@ -82,6 +82,21 @@ create table proposal_assignments
 );
 create index idx_proposal_assignments_epoch on proposal_assignments (epoch);
 
+drop table if exists validator_history;
+create table validator_history
+(
+    epoch          int not null,
+    week           int not null,
+    validatorindex int not null,
+    attesterslot   int not null,
+    committeeindex int not null,
+    attestationstatus         int not null, /* Can be 0 = scheduled, 1 executed, 2 missed, 3 orphaned */
+    inclusionslot  int not null default 0, /* Slot this attestation was included for the first time */
+    balance bigint not null,
+    effectivebalance bigint not null,
+    primary key (validatorindex, week, epoch)
+) PARTITION BY LIST (week);
+
 drop table if exists attestation_assignments_p;
 create table attestation_assignments_p
 (

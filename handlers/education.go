@@ -8,6 +8,7 @@ import (
 
 var educationServicesTemplate = template.Must(template.New("educationServices").Funcs(utils.GetTemplateFuncs()).ParseFiles("templates/layout.html", "templates/educationServices.html"))
 
+// EducationServices hanlder
 func EducationServices(w http.ResponseWriter, r *http.Request) {
 	var err error
 

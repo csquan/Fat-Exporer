@@ -11,13 +11,11 @@ require (
 	github.com/chromedp/chromedp v0.5.3
 	github.com/cloudflare/roughtime v0.0.0-20200528200038-bacff06d032d // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
-	github.com/davecgh/go-spew v1.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/ethereum/go-ethereum v1.9.14
 	github.com/evanw/esbuild v0.8.23
 	github.com/go-openapi/spec v0.19.12 // indirect
 	github.com/gogo/protobuf v1.3.1
-	github.com/google/go-querystring v1.0.0
 	github.com/gorilla/context v1.1.1
 	github.com/gorilla/csrf v1.7.0
 	github.com/gorilla/mux v1.7.3
@@ -46,7 +44,6 @@ require (
 	github.com/stripe/stripe-go/v72 v72.24.0
 	github.com/swaggo/http-swagger v0.0.0-20200308142732-58ac5e232fba
 	github.com/swaggo/swag v1.6.9
-	github.com/tdewolff/parse v2.3.4+incompatible // indirect
 	github.com/urfave/cli/v2 v2.3.0 // indirect
 	github.com/urfave/negroni v1.0.0
 	github.com/zesik/proxyaddr v0.0.0-20161218060608-ec32c535184d

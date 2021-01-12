@@ -29,18 +29,18 @@ import (
 // @securitydefinitions.oauth2.accessCode OAuthAccessCode
 // @tokenurl https://beaconcha.in/user/token
 // @authorizationurl https://beaconcha.in/user/authorize
-// @securitydefinitions.apikey ApiKeyAuth
+// @securitydefinitions.APIkey APIKeyAuth
 // @in header
 // @name Authorization
 
-// ApiHealthz godoc
+// APIHealthz godoc
 // @Summary Health of the explorer
 // @Tags Health
 // @Description Health endpoint for montitoring if the explorer is in sync
 // @Produce  text/plain
 // @Success 200 {object} string
 // @Router /api/healthz [get]
-func ApiHealthz(w http.ResponseWriter, r *http.Request) {
+func APIHealthz(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain")
 
@@ -71,7 +71,7 @@ func ApiHealthz(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "OK. Last epoch is from %v ago", time.Since(epochTime))
 }
 
-// ApiEpoch godoc
+// APIEpoch godoc
 // @Summary Get epoch by number
 // @Tags Epoch
 // @Description Returns information for a specified epoch by the epoch number or the latest epoch
@@ -79,7 +79,7 @@ func ApiHealthz(w http.ResponseWriter, r *http.Request) {
 // @Param  epoch path string true "Epoch number or the string latest"
 // @Success 200 {object} string
 // @Router /api/v1/epoch/{epoch} [get]
-func ApiEpoch(w http.ResponseWriter, r *http.Request) {
+func APIEpoch(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -111,7 +111,7 @@ func ApiEpoch(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiEpochBlocks godoc
+// APIEpochBlocks godoc
 // @Summary Get epoch blocks by epoch number
 // @Tags Epoch
 // @Description Returns all blocks for a specified epoch
@@ -119,7 +119,7 @@ func ApiEpoch(w http.ResponseWriter, r *http.Request) {
 // @Param  epoch path string true "Epoch number or the string latest"
 // @Success 200 {object} string
 // @Router /api/v1/epoch/{epoch}/blocks [get]
-func ApiEpochBlocks(w http.ResponseWriter, r *http.Request) {
+func APIEpochBlocks(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -146,7 +146,7 @@ func ApiEpochBlocks(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiBlock godoc
+// APIBlock godoc
 // @Summary Get block
 // @Tags Block
 // @Description Returns a block by its slot or root hash
@@ -154,7 +154,7 @@ func ApiEpochBlocks(w http.ResponseWriter, r *http.Request) {
 // @Param  slotOrHash path string true "Block slot or root hash or the string latest"
 // @Success 200 {object} string
 // @Router /api/v1/block/{slotOrHash} [get]
-func ApiBlock(w http.ResponseWriter, r *http.Request) {
+func APIBlock(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -182,7 +182,7 @@ func ApiBlock(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiBlockAttestations godoc
+// APIBlockAttestations godoc
 // @Summary Get the attestations included in a specific block
 // @Tags Block
 // @Description Returns the attestations included in a specific block
@@ -190,7 +190,7 @@ func ApiBlock(w http.ResponseWriter, r *http.Request) {
 // @Param  slot path string true "Block slot"
 // @Success 200 {object} string
 // @Router /api/v1/block/{slot}/attestations [get]
-func ApiBlockAttestations(w http.ResponseWriter, r *http.Request) {
+func APIBlockAttestations(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -213,7 +213,7 @@ func ApiBlockAttestations(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiBlockDeposits godoc
+// APIBlockDeposits godoc
 // @Summary Get the deposits included in a specific block
 // @Tags Block
 // @Description Returns the deposits included in a specific block
@@ -221,7 +221,7 @@ func ApiBlockAttestations(w http.ResponseWriter, r *http.Request) {
 // @Param  slot path string true "Block slot"
 // @Success 200 {object} string
 // @Router /api/v1/block/{slot}/deposits [get]
-func ApiBlockDeposits(w http.ResponseWriter, r *http.Request) {
+func APIBlockDeposits(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -244,7 +244,7 @@ func ApiBlockDeposits(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiBlockAttesterSlashings godoc
+// APIBlockAttesterSlashings godoc
 // @Summary Get the attester slashings included in a specific block
 // @Tags Block
 // @Description Returns the attester slashings included in a specific block
@@ -252,7 +252,7 @@ func ApiBlockDeposits(w http.ResponseWriter, r *http.Request) {
 // @Param  slot path string true "Block slot"
 // @Success 200 {object} string
 // @Router /api/v1/block/{slot}/attesterslashings [get]
-func ApiBlockAttesterSlashings(w http.ResponseWriter, r *http.Request) {
+func APIBlockAttesterSlashings(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -275,7 +275,7 @@ func ApiBlockAttesterSlashings(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiBlockProposerSlashings godoc
+// APIBlockProposerSlashings godoc
 // @Summary Get the proposer slashings included in a specific block
 // @Tags Block
 // @Description Returns the proposer slashings included in a specific block
@@ -283,7 +283,7 @@ func ApiBlockAttesterSlashings(w http.ResponseWriter, r *http.Request) {
 // @Param  slot path string true "Block slot"
 // @Success 200 {object} string
 // @Router /api/v1/block/{slot}/proposerslashings [get]
-func ApiBlockProposerSlashings(w http.ResponseWriter, r *http.Request) {
+func APIBlockProposerSlashings(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -306,7 +306,7 @@ func ApiBlockProposerSlashings(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiBlockVoluntaryExits godoc
+// APIBlockVoluntaryExits godoc
 // @Summary Get the voluntary exits included in a specific block
 // @Tags Block
 // @Description Returns the voluntary exits included in a specific block
@@ -314,7 +314,7 @@ func ApiBlockProposerSlashings(w http.ResponseWriter, r *http.Request) {
 // @Param  slot path string true "Block slot"
 // @Success 200 {object} string
 // @Router /api/v1/block/{slot}/voluntaryexits [get]
-func ApiBlockVoluntaryExits(w http.ResponseWriter, r *http.Request) {
+func APIBlockVoluntaryExits(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -337,14 +337,14 @@ func ApiBlockVoluntaryExits(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiEth1Deposit godoc
+// APIEth1Deposit godoc
 // @Summary Get an eth1 deposit by its eth1 transaction hash
 // @Tags Eth1
 // @Produce  json
 // @Param  txhash path string true "Eth1 transaction hash"
 // @Success 200 {object} string
 // @Router /api/v1/eth1deposit/{txhash} [get]
-func ApiEth1Deposit(w http.ResponseWriter, r *http.Request) {
+func APIEth1Deposit(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -367,21 +367,21 @@ func ApiEth1Deposit(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiValidator godoc
+// APIValidator godoc
 // @Summary Get up to 100 validators by their index
 // @Tags Validator
 // @Produce  json
 // @Param  indexOrPubkey path string true "Up to 100 validator indicesOrPubkeys, comma separated"
 // @Success 200 {object} string
 // @Router /api/v1/validator/{indexOrPubkey} [get]
-func ApiValidator(w http.ResponseWriter, r *http.Request) {
+func APIValidator(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
 	j := json.NewEncoder(w)
 	vars := mux.Vars(r)
 
-	queryIndices, queryPubkeys, err := parseApiValidatorParam(vars["indexOrPubkey"])
+	queryIndices, queryPubkeys, err := parseAPIValidatorParam(vars["indexOrPubkey"])
 	if err != nil {
 		sendErrorResponse(j, r.URL.String(), err.Error())
 		return
@@ -397,14 +397,14 @@ func ApiValidator(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiValidatorByEth1Address godoc
+// APIValidatorByEth1Address godoc
 // @Summary Get all validators that belong to an eth1 address
 // @Tags Validator
 // @Produce  json
 // @Param  eth1address path string true "Eth1 address from which the validator deposits were sent"
 // @Success 200 {object} string
 // @Router /api/v1/validator/eth1/{address} [get]
-func ApiValidatorByEth1Address(w http.ResponseWriter, r *http.Request) {
+func APIValidatorByEth1Address(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -428,21 +428,21 @@ func ApiValidatorByEth1Address(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiValidator godoc
+// APIValidatorBalanceHistory godoc
 // @Summary Get the balance history (last 100 epochs) of up to 100 validators
 // @Tags Validator
 // @Produce  json
 // @Param  indexOrPubkey path string true "Up to 100 validator indicesOrPubkeys, comma separated"
 // @Success 200 {object} string
 // @Router /api/v1/validator/{indexOrPubkey}/balancehistory [get]
-func ApiValidatorBalanceHistory(w http.ResponseWriter, r *http.Request) {
+func APIValidatorBalanceHistory(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
 	j := json.NewEncoder(w)
 	vars := mux.Vars(r)
 
-	queryIndices, queryPubkeys, err := parseApiValidatorParam(vars["indexOrPubkey"])
+	queryIndices, queryPubkeys, err := parseAPIValidatorParam(vars["indexOrPubkey"])
 	if err != nil {
 		sendErrorResponse(j, r.URL.String(), err.Error())
 		return
@@ -458,21 +458,21 @@ func ApiValidatorBalanceHistory(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiValidatorPerformance godoc
+// APIValidatorPerformance godoc
 // @Summary Get the current performance of up to 100 validators
 // @Tags Validator
 // @Produce  json
 // @Param  indexOrPubkey path string true "Up to 100 validator indicesOrPubkeys, comma separated"
 // @Success 200 {object} string
 // @Router /api/v1/validator/{indexOrPubkey}/performance [get]
-func ApiValidatorPerformance(w http.ResponseWriter, r *http.Request) {
+func APIValidatorPerformance(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
 	j := json.NewEncoder(w)
 	vars := mux.Vars(r)
 
-	queryIndices, queryPubkeys, err := parseApiValidatorParam(vars["indexOrPubkey"])
+	queryIndices, queryPubkeys, err := parseAPIValidatorParam(vars["indexOrPubkey"])
 	if err != nil {
 		sendErrorResponse(j, r.URL.String(), err.Error())
 		return
@@ -488,14 +488,14 @@ func ApiValidatorPerformance(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiValidatorAttestationEfficiency godoc
+// APIValidatorAttestationEfficiency godoc
 // @Summary Get the current performance of up to 100 validators
 // @Tags Validator
 // @Produce  json
 // @Param  index path string true "Up to 100 validator indicesOrPubkeys, comma separated"
 // @Success 200 {object} string
 // @Router /api/v1/validator/{indexOrPubkey}/attestationefficiency [get]
-func ApiValidatorAttestationEfficiency(w http.ResponseWriter, r *http.Request) {
+func APIValidatorAttestationEfficiency(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -507,7 +507,7 @@ func ApiValidatorAttestationEfficiency(w http.ResponseWriter, r *http.Request) {
 		epoch = 0
 	}
 
-	queryIndices, queryPubkeys, err := parseApiValidatorParam(vars["indexOrPubkey"])
+	queryIndices, queryPubkeys, err := parseAPIValidatorParam(vars["indexOrPubkey"])
 	if err != nil {
 		sendErrorResponse(j, r.URL.String(), err.Error())
 		return
@@ -538,13 +538,13 @@ func ApiValidatorAttestationEfficiency(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiValidatorLeaderboard godoc
+// APIValidatorLeaderboard godoc
 // @Summary Get the current top 100 performing validators (using the income over the last 7 days)
 // @Tags Validator
 // @Produce  json
 // @Success 200 {object} string
 // @Router /api/v1/validator/leaderboard [get]
-func ApiValidatorLeaderboard(w http.ResponseWriter, r *http.Request) {
+func APIValidatorLeaderboard(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -564,21 +564,21 @@ func ApiValidatorLeaderboard(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiValidatorDeposits godoc
+// APIValidatorDeposits godoc
 // @Summary Get all eth1 deposits for up to 100 validators
 // @Tags Validator
 // @Produce  json
 // @Param  indexOrPubkey path string true "Up to 100 validator indicesOrPubkeys, comma separated"
 // @Success 200 {object} string
 // @Router /api/v1/validator/{indexOrPubkey}/deposits [get]
-func ApiValidatorDeposits(w http.ResponseWriter, r *http.Request) {
+func APIValidatorDeposits(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
 	j := json.NewEncoder(w)
 	vars := mux.Vars(r)
 
-	queryIndices, queryPubkeys, err := parseApiValidatorParam(vars["indexOrPubkey"])
+	queryIndices, queryPubkeys, err := parseAPIValidatorParam(vars["indexOrPubkey"])
 	if err != nil {
 		sendErrorResponse(j, r.URL.String(), err.Error())
 		return
@@ -594,21 +594,21 @@ func ApiValidatorDeposits(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiValidatorAttestations godoc
+// APIValidatorAttestations godoc
 // @Summary Get all attestations during the last 10 epochs for up to 100 validators
 // @Tags Validator
 // @Produce  json
 // @Param  indexOrPubkey path string true "Up to 100 validator indicesOrPubkeys, comma separated"
 // @Success 200 {object} string
 // @Router /api/v1/validator/{indexOrPubkey}/attestations [get]
-func ApiValidatorAttestations(w http.ResponseWriter, r *http.Request) {
+func APIValidatorAttestations(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
 	j := json.NewEncoder(w)
 	vars := mux.Vars(r)
 
-	queryIndices, queryPubkeys, err := parseApiValidatorParam(vars["indexOrPubkey"])
+	queryIndices, queryPubkeys, err := parseAPIValidatorParam(vars["indexOrPubkey"])
 	if err != nil {
 		sendErrorResponse(j, r.URL.String(), err.Error())
 		return
@@ -624,21 +624,21 @@ func ApiValidatorAttestations(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiValidatorProposals godoc
+// APIValidatorProposals godoc
 // @Summary Get all proposed blocks during the last 100 epochs for up to 100 validators
 // @Tags Validator
 // @Produce  json
 // @Param  indexOrPubkey path string true "Up to 100 validator indicesOrPubkeys, comma separated"
 // @Success 200 {object} string
 // @Router /api/v1/validator/{indexOrPubkey}/proposals [get]
-func ApiValidatorProposals(w http.ResponseWriter, r *http.Request) {
+func APIValidatorProposals(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
 	j := json.NewEncoder(w)
 	vars := mux.Vars(r)
 
-	queryIndices, queryPubkeys, err := parseApiValidatorParam(vars["indexOrPubkey"])
+	queryIndices, queryPubkeys, err := parseAPIValidatorParam(vars["indexOrPubkey"])
 	if err != nil {
 		sendErrorResponse(j, r.URL.String(), err.Error())
 		return
@@ -654,14 +654,14 @@ func ApiValidatorProposals(w http.ResponseWriter, r *http.Request) {
 	returnQueryResults(rows, j, r)
 }
 
-// ApiChart godoc
+// APIChart godoc
 // @Summary Returns charts from the page https://beaconcha.in/charts as PNG
 // @Tags Charts
 // @Produce  json
 // @Param  chart path string true "Chart name (see https://github.com/gobitfly/eth2-beaconchain-explorer/blob/master/services/charts_updater.go#L20 for all available names)"
 // @Success 200 {object} string
 // @Router /api/v1/chart/{chart} [get]
-func ApiChart(w http.ResponseWriter, r *http.Request) {
+func APIChart(w http.ResponseWriter, r *http.Request) {
 
 	j := json.NewEncoder(w)
 	vars := mux.Vars(r)
@@ -840,10 +840,10 @@ func getDeviceNameFromUA(userAgent string) string {
 // @Tags User
 // @Produce  json
 // @Param token body string true "Your device`s firebase notification token"
-// @Success 200 {object} types.ApiResponse
-// @Failure 400 {object} types.ApiResponse
-// @Failure 500 {object} types.ApiResponse
-// @Security ApiKeyAuth
+// @Success 200 {object} types.APIResponse
+// @Failure 400 {object} types.APIResponse
+// @Failure 500 {object} types.APIResponse
+// @Security APIKeyAuth
 // @Router /api/v1/mobile/notify/register [post]
 func MobileNotificationUpdatePOST(w http.ResponseWriter, r *http.Request) {
 
@@ -867,10 +867,10 @@ func MobileNotificationUpdatePOST(w http.ResponseWriter, r *http.Request) {
 // @Summary Get your device settings, currently only whether to enable mobile notifcations or not
 // @Tags User
 // @Produce json
-// @Success 200 {object} types.ApiResponse{data=types.MobileSettingsData}
-// @Failure 400 {object} types.ApiResponse
-// @Failure 500 {object} types.ApiResponse
-// @Security ApiKeyAuth
+// @Success 200 {object} types.APIResponse{data=types.MobileSettingsData}
+// @Failure 400 {object} types.APIResponse
+// @Failure 500 {object} types.APIResponse
+// @Security APIKeyAuth
 // @Router /api/v1/user/mobile/settings [get]
 func MobileDeviceSettings(w http.ResponseWriter, r *http.Request) {
 
@@ -895,10 +895,10 @@ func MobileDeviceSettings(w http.ResponseWriter, r *http.Request) {
 // @Tags User
 // @Produce json
 // @Param notify_enabled body bool true "Whether to enable mobile notifications for this device or not"
-// @Success 200 {object} types.ApiResponse{data=types.MobileSettingsData}
-// @Failure 400 {object} types.ApiResponse
-// @Failure 500 {object} types.ApiResponse
-// @Security ApiKeyAuth
+// @Success 200 {object} types.APIResponse{data=types.MobileSettingsData}
+// @Failure 400 {object} types.APIResponse
+// @Failure 500 {object} types.APIResponse
+// @Security APIKeyAuth
 // @Router /api/v1/user/mobile/settings [post]
 func MobileDeviceSettingsPOST(w http.ResponseWriter, r *http.Request) {
 
@@ -924,10 +924,10 @@ func MobileDeviceSettingsPOST(w http.ResponseWriter, r *http.Request) {
 // @Summary Get all your tagged validators
 // @Tags User
 // @Produce json
-// @Success 200 {object} types.ApiResponse{data=[]types.MinimalTaggedValidators}
-// @Failure 400 {object} types.ApiResponse
-// @Failure 500 {object} types.ApiResponse
-// @Security ApiKeyAuth
+// @Success 200 {object} types.APIResponse{data=[]types.MinimalTaggedValidators}
+// @Failure 400 {object} types.APIResponse
+// @Failure 500 {object} types.APIResponse
+// @Security APIKeyAuth
 // @Router /api/v1/user/validator/saved [get]
 func MobileTagedValidators(w http.ResponseWriter, r *http.Request) {
 
@@ -981,7 +981,7 @@ func SendErrorResponse(j *json.Encoder, route, message string) {
 }
 
 func sendErrorResponse(j *json.Encoder, route, message string) {
-	response := &types.ApiResponse{}
+	response := &types.APIResponse{}
 	response.Status = "ERROR: " + message
 	err := j.Encode(response)
 
@@ -997,7 +997,7 @@ func SendOKResponse(j *json.Encoder, route string, data []interface{}) {
 }
 
 func sendOKResponse(j *json.Encoder, route string, data []interface{}) {
-	response := &types.ApiResponse{}
+	response := &types.APIResponse{}
 	response.Status = "OK"
 
 	if len(data) == 1 {
@@ -1013,7 +1013,7 @@ func sendOKResponse(j *json.Encoder, route string, data []interface{}) {
 	return
 }
 
-func parseApiValidatorParam(origParam string) (indices []uint64, pubkeys pq.ByteaArray, err error) {
+func parseAPIValidatorParam(origParam string) (indices []uint64, pubkeys pq.ByteaArray, err error) {
 	params := strings.Split(origParam, ",")
 	if len(params) > 100 {
 		return nil, nil, fmt.Errorf("only a maximum of 100 query parameters are allowed")
