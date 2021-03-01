@@ -448,9 +448,8 @@ ul.multiselect input:focus {
   border-color:  rgba(159, 162, 177, 0.4);
   background-color:rgba(159, 162, 177, 0.4);
   cursor:pointer;
-  width: 65px;
   position: absolute;
-  top: 0%;	
+  top: 8%;
   left: 1%;
   z-index: 999;
 }
