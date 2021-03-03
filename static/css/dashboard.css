@@ -19,7 +19,6 @@
   box-shadow: 0 2px 3px rgba(0,0,0,0.06);
 }
 
-
 .multiselect-border:hover, .multiselect-border.focused {
   box-shadow: 0 0 6px 0 var(--shadow-light);
 }
@@ -93,7 +92,6 @@ ul.multiselect li.input {
   height: inherit;
   width: inherit;
   border-radius: 0;
-  
 }
 
 ul.multiselect li.input span {

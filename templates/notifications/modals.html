@@ -1,0 +1,173 @@
+{{ define "addValidatorModal" }}
+<div class="modal fade" id="add-validator-modal" tabindex="-1" role="dialog"
+    aria-labelledby="add-validator-modal-label" aria-hidden="true">
+    <form id="add-validator-form" action="." method="get">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bookmarkModalLabel">Add to Watchlist</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="info-banner-search">
+                        <div class="form-group w-100">
+                            <label for="add-validator-search-input" class="w-100">Select Validator</label>
+                            <input id="addvalidator-search-input" class="form-control border-secondary w-100" autocomplete="off" name="search"
+                                       type="text" placeholder="Validator Index / Public Key" aria-label="Search">
+                        </div>
+                    </div>
+                    <p>Additionally to adding the validator to your watch list you can optionally subscribe to events
+                        and receive email notifications.</p>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input class="form-check-input" id="balance_decreases" type="checkbox"
+                                name="balance_decreases">
+                            <label class="form-check-label" for="balance_decreases">
+                                balance decreases
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" id="validator_slashed" type="checkbox"
+                                name="validator_slashed">
+                            <label class="form-check-label" for="validator_slashed">
+                                validator slashed
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" id="validator_proposal_missed" type="checkbox"
+                                name="validator_proposal_missed">
+                            <label class="form-check-label" for="validator_proposal_missed">
+                                missed proposals
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" id="validator_proposal_submitted" type="checkbox"
+                                name="validator_proposal_submitted">
+                            <label class="form-check-label" for="validator_proposal_submitted">
+                                submitted proposals
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" id="validator_attestation_missed" type="checkbox"
+                                name="validator_attestation_missed">
+                            <label class="form-check-label" for="validator_attestation_missed">
+                                missed attestations
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary text-light" data-dismiss="modal">Close</button>
+                    <button id="add-validator-modal-submit" type="submit" class="btn btn-primary">Add To Watchlist</button>
+                </div>
+            </div>
+        </div>
+    </form>
+    <script>
+        document.getElementById('add-validator-form').addEventListener('submit', function(ev) {
+            console.log('submitting form')
+            ev.preventDefault() 
+            var input = document.getElementById('addvalidator-search-input')
+            $.ajax({
+                url: '/validator/' + input.value + '/add',
+                data: $('#add-validator-form').serialize(),
+                type: 'post',
+                success: function() {
+                    console.log('success')
+                    window.location.reload()
+                },
+                cache: function(err) {
+                    console.log(err)
+                    alert('could not add validator')
+                }
+            })
+        })
+
+        window.addEventListener('load', function() {
+
+            var bhValidators = new Bloodhound({
+                datumTokenizer: Bloodhound.tokenizers.whitespace,
+                queryTokenizer: Bloodhound.tokenizers.whitespace,
+                identify: function(obj) {
+                return obj.pubkey
+                },
+                remote: {
+                url: '/search/validators/%QUERY',
+                wildcard: '%QUERY'
+                }
+            })
+
+
+            // var bhGraffiti = new Bloodhound({
+            //     datumTokenizer: Bloodhound.tokenizers.whitespace,
+            //     queryTokenizer: Bloodhound.tokenizers.whitespace,
+            //     identify: function(obj) {
+            //     return obj.graffiti
+            //     },
+            //     remote: {
+            //     url: '/search/graffiti/%QUERY',
+            //     wildcard: '%QUERY'
+            //     }
+            // })
+
+            // var bhEth1Accounts = new Bloodhound({
+            //     datumTokenizer: Bloodhound.tokenizers.whitespace,
+            //     queryTokenizer: Bloodhound.tokenizers.whitespace,
+            //     identify: function(obj) {
+            //     return obj.account
+            //     },
+            //     remote: {
+            //     url: '/search/eth1_addresses/%QUERY',
+            //     wildcard: '%QUERY'
+            //     }
+            //     })
+
+            $('#addvalidator-search-input').typeahead({
+                minLength: 1,
+                highlight: true,
+                hint: false,
+                autoselect: false
+                },
+                {
+                limit: 5,
+                name: 'validators',
+                source: bhValidators,
+                display: 'pubkey',
+                templates: {
+                    header: '<h3 class="h5">Validators</h3>',
+                    suggestion: function(data) {
+                    return `<div class="text-monospace text-truncate">${data.index}: ${data.pubkey}</div>`
+                    }
+                }
+                },
+                // {
+                // limit: 5,
+                // name: 'addresses',
+                // source: bhEth1Accounts,
+                // display: 'address',
+                // templates: {
+                //     header: '<h3 class="h5">ETH1 Addresses</h3>',
+                //     suggestion: function(data) {
+                //     return `<div class="text-monospace text-truncate">0x${data.address}</div>`
+                //     }
+                // }
+                // },
+                // {
+                // limit: 5,
+                // name: 'graffiti',
+                // source: bhGraffiti,
+                // display: 'graffiti',
+                // templates: {
+                //     header: '<h3 class="h5">Blocks by Graffiti</h3>',
+                //     suggestion: function(data) {
+                //     return `<div class="text-monospace" style="display:flex"><div class="text-truncate" style="flex:1 1 auto;">${data.graffiti}</div><div style="max-width:fit-content;white-space:nowrap;">${data.count}</div></div>`
+                //     }
+                // }
+                // }
+            )
+        })
+    </script>
+</div>
+{{end}}

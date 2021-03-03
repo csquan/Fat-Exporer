@@ -25,9 +25,10 @@ import (
 )
 
 var userTemplate = template.Must(template.New("user").Funcs(utils.GetTemplateFuncs()).ParseFiles("templates/layout.html", "templates/user/settings.html"))
-var notificationTemplate = template.Must(template.New("user").Funcs(utils.GetTemplateFuncs()).ParseFiles("templates/layout.html", "templates/user/notifications.html"))
+var notificationTemplate = template.Must(template.New("user").Funcs(utils.GetTemplateFuncs()).ParseFiles("templates/layout.html", "templates/user/notifications.html", "templates/notifications/watchlist.html", "templates/notifications/subscriptions.html", "templates/notifications/modals.html"))
 var authorizeTemplate = template.Must(template.New("user").Funcs(utils.GetTemplateFuncs()).ParseFiles("templates/layout.html", "templates/user/authorize.html"))
 
+// UserAuthMiddleware is a guard that checks if the user is authenticated before forwarding the request to the next handler
 func UserAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := getUser(w, r)
