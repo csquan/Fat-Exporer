@@ -33,6 +33,9 @@ const (
 	MonitoringMachineSwitchedToETH2FallbackEventName EventName = "monitoring_fallback_eth2inuse"
 	MonitoringMachineSwitchedToETH1FallbackEventName EventName = "monitoring_fallback_eth1inuse"
 	TaxReportEventName                               EventName = "user_tax_report"
+
+	RocketPoolCollateralEventName   EventName = "rocketpool_minipool_collateral"
+	RocketPoolWithdrawableEventName EventName = "rocketpool_minipool_withdrawable"
 )
 
 var EventNames = []EventName{

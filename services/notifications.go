@@ -101,6 +101,16 @@ func collectNotifications() map[uint64]map[types.EventName][]types.Notification 
 		logger.Errorf("error collecting tax report notifications: %v", err)
 	}
 
+	err = collectRocketPoolCollateralNotifications(notificationsByUserID, types.RocketPoolCollateralEventName)
+	if err != nil {
+		logger.Errorf("error collecting rocket pool collateral notifications: %v", err)
+	}
+
+	err = collectRocketPoolWithdrawableNotifications(notificationsByUserID, types.RocketPoolWithdrawableEventName)
+	if err != nil {
+		logger.Errorf("error collecting rocket pool collateral notifications: %v", err)
+	}
+
 	return notificationsByUserID
 }
 
@@ -654,6 +664,145 @@ func collectAttestationNotifications(notificationsByUserID map[uint64]map[types.
 
 	return nil
 }
+
+type rocketPoolCollateralNotification struct {
+	SubscriptionID uint64
+	NodeAddress    string
+	Stake          uint64
+	MinStake       uint64
+	MaxStake       uint64
+	Epoch          uint64
+	EventName      types.EventName
+	Slot           uint64
+}
+
+func (n *rocketPoolCollateralNotification) GetEmailAttachment() *types.EmailAttachment {
+	return nil
+}
+
+func (n *rocketPoolCollateralNotification) GetSubscriptionID() uint64 {
+	return n.SubscriptionID
+}
+
+func (n *rocketPoolCollateralNotification) GetEpoch() uint64 {
+	return n.Epoch
+}
+
+func (n *rocketPoolCollateralNotification) GetEventName() types.EventName {
+	return n.EventName
+}
+
+func (n *rocketPoolCollateralNotification) GetInfo(includeUrl bool) string {
+	return fmt.Sprintf(`Rocket Pool Node %v has an invalid RPL stake amount. The current stake is %v and should be between %v < RPL Stake < %v.`, n.NodeAddress, n.Stake, n.MinStake, n.MaxStake)
+}
+
+func (n *rocketPoolCollateralNotification) GetTitle() string {
+	return "Invalid Rocket Pool Stake Amount"
+}
+
+func (n *rocketPoolCollateralNotification) GetEventFilter() string {
+	return n.NodeAddress
+}
+
+func collectRocketPoolCollateralNotifications(notificationsByUserID map[uint64]map[types.EventName][]types.Notification, eventName types.EventName) error {
+	runs := 1
+	pubkeys, subMap, err := db.GetSubsForEventFilter(eventName)
+	if err != nil {
+		return fmt.Errorf("error getting subscriptions for missted attestations %w", err)
+	}
+	if len(pubkeys) > 5000 {
+		runs = len(pubkeys) / 5000
+		if len(pubkeys)%5000 != 0 {
+			runs += 1
+		}
+	}
+
+	type dbResult struct {
+		NodeAddress []byte `db:"address"`
+		Stake       uint64 `db:"rpl_stake"`
+		MaxStake    uint64 `db:"max_rpl_stake"`
+		MinStake    uint64 `db:"min_rpl_stake"`
+	}
+
+	events := make([]dbResult, 0)
+	for i := 0; i < runs; i++ {
+		var keys [][]byte
+		if i == (runs - 1) {
+			keys = pubkeys[i*5000:]
+		} else {
+			keys = pubkeys[i*5000 : (i+1)*5000]
+		}
+
+		var partial []dbResult
+		// OR rn.stake > rn.max_rpl_stake
+		err = db.DB.Select(&partial, `
+			  SELECT 
+				  *
+				FROM 
+					rocketpool_nodes rn
+				INNER JOIN 
+					rocketpool_minipools rm on rn.address = rm.node_address
+				WHERE
+					rn.stake < rn.min_rpl_stake 
+			`, latestEpoch, latestSlot, pq.ByteaArray(keys))
+		if err != nil {
+			return err
+		}
+
+		events = append(events, partial...)
+	}
+
+	for _, event := range events {
+		subscribers, ok := subMap[hex.EncodeToString(event.NodeAddress)]
+		if !ok {
+			return fmt.Errorf("error event returned that does not exist: %x", event.NodeAddress)
+		}
+		for _, sub := range subscribers {
+			if sub.UserID == nil || sub.ID == nil {
+				return fmt.Errorf("error expected userId or subId to be defined but got user: %v, sub: %v", sub.UserID, sub.ID)
+			}
+			// send the notification max once every two days
+			if sub.LastEpoch != nil {
+				latestEpoch := LatestEpoch()
+				lastSentEpoch := *sub.LastEpoch
+				if lastSentEpoch >= latestEpoch-450 {
+					continue
+				}
+			}
+			n := &rocketPoolCollateralNotification{
+				SubscriptionID: *sub.ID,
+				NodeAddress:    hex.EncodeToString(event.NodeAddress),
+				Stake:          event.Stake,
+				MinStake:       event.MinStake,
+				MaxStake:       event.MaxStake,
+			}
+			if _, exists := notificationsByUserID[*sub.UserID]; !exists {
+				notificationsByUserID[*sub.UserID] = map[types.EventName][]types.Notification{}
+			}
+			if _, exists := notificationsByUserID[*sub.UserID][n.GetEventName()]; !exists {
+				notificationsByUserID[*sub.UserID][n.GetEventName()] = []types.Notification{}
+			}
+			notificationsByUserID[*sub.UserID][n.GetEventName()] = append(notificationsByUserID[*sub.UserID][n.GetEventName()], n)
+		}
+	}
+
+	return nil
+}
+
+// func collectRocketPoolWithdrawableNotifications(notificationsByUserID map[uint64]map[types.EventName][]types.Notification, eventName types.EventName) error {
+// 	runs := 1
+// 	pubkeys, subMap, err := db.GetSubsForEventFilter(eventName)
+// 	if err != nil {
+// 		return fmt.Errorf("error getting subscriptions for missted attestations %w", err)
+// 	}
+// 	if len(pubkeys) > 5000 {
+// 		runs = len(pubkeys) / 5000
+// 		if len(pubkeys)%5000 != 0 {
+// 			runs += 1
+// 		}
+// 	}
+
+// }
 
 type validatorAttestationNotification struct {
 	SubscriptionID     uint64
