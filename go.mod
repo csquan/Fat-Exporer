@@ -3,16 +3,23 @@ module eth2-exporter
 go 1.15
 
 require (
-	cloud.google.com/go v0.81.0
+	cloud.google.com/go v0.99.0
+	cloud.google.com/go/bigtable v1.12.0
 	cloud.google.com/go/firestore v1.4.0 // indirect
+	cloud.google.com/go/secretmanager v1.0.0
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/Gurpartap/storekit-go v0.0.0-20201205024111-36b6cd5c6a21
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/awa/go-iap v1.3.7
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
+	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chromedp/cdproto v0.0.0-20200709115526-d1f6fc58448b
 	github.com/chromedp/chromedp v0.5.3
+	github.com/cncf/xds/go v0.0.0-20211130200136-a8f946100490 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/envoyproxy/go-control-plane v0.10.1 // indirect
+	github.com/envoyproxy/protoc-gen-validate v0.6.2 // indirect
 	github.com/ethereum/go-ethereum v1.10.8
 	github.com/evanw/esbuild v0.8.23
 	github.com/go-chi/chi v4.0.2+incompatible // indirect
@@ -59,14 +66,14 @@ require (
 	github.com/urfave/negroni v1.0.0
 	github.com/zesik/proxyaddr v0.0.0-20161218060608-ec32c535184d
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
+	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20211113001501-0c823b97ae02 // indirect
+	golang.org/x/sys v0.0.0-20211210111614-af8b64212486 // indirect
 	golang.org/x/text v0.3.7
 	golang.org/x/tools v0.1.7 // indirect
-	google.golang.org/api v0.44.0
-	google.golang.org/genproto v0.0.0-20210426193834-eac7f76ac494
-	google.golang.org/grpc v1.37.0
+	google.golang.org/api v0.62.0
+	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa
+	google.golang.org/grpc v1.42.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 

@@ -24,23 +24,24 @@ var epochBlacklist = make(map[uint64]uint64)
 
 // Start will start the export of data from rpc into the database
 func Start(client rpc.Client) error {
-	go performanceDataUpdater()
-	go networkLivenessUpdater(client)
-	go eth1DepositsExporter()
-	go genesisDepositsExporter()
-	go checkSubscriptions()
-	go cleanupOldMachineStats()
-	go syncCommitteesExporter(client)
-	if utils.Config.SSVExporter.Enabled {
-		go ssvExporter()
-	}
-	if utils.Config.RocketpoolExporter.Enabled {
-		go rocketpoolExporter()
-	}
 
-	if utils.Config.Indexer.PubKeyTagsExporter.Enabled {
-		go UpdatePubkeyTag()
-	}
+	// go performanceDataUpdater()
+	// go networkLivenessUpdater(client)
+	// go eth1DepositsExporter()
+	// go genesisDepositsExporter()
+	// go checkSubscriptions()
+	// go cleanupOldMachineStats()
+	// go syncCommitteesExporter(client)
+	// if utils.Config.SSVExporter.Enabled {
+	// 	go ssvExporter()
+	// }
+	// if utils.Config.RocketpoolExporter.Enabled {
+	// 	go rocketpoolExporter()
+	// }
+
+	// if utils.Config.Indexer.PubKeyTagsExporter.Enabled {
+	// 	go UpdatePubkeyTag()
+	// }
 
 	// wait until the beacon-node is available
 	for {
@@ -231,8 +232,6 @@ func Start(client rpc.Client) error {
 			lastExportedSlot = block.Slot
 		}
 	}
-
-	return nil
 }
 
 // Will ensure the db is fully in sync with the node
@@ -440,6 +439,27 @@ func GetLastBlocks(startEpoch, endEpoch uint64, client rpc.Client) ([]*types.Min
 	}
 
 	return wrappedBlocks, nil
+}
+
+// ExportEpoch will export an epoch from rpc into bigtable
+func ExportEpochBigtable(epoch uint64, client rpc.Client) error {
+	start := time.Now()
+	defer func() {
+		metrics.TaskDuration.WithLabelValues("export_epoch").Observe(time.Since(start).Seconds())
+		logger.WithFields(logrus.Fields{"duration": time.Since(start), "epoch": epoch}).Info("completed exporting epoch")
+	}()
+
+	startGetEpochData := time.Now()
+	logger.Printf("retrieving data for epoch %v", epoch)
+	data, err := client.GetEpochData(epoch)
+	if err != nil {
+		return fmt.Errorf("error retrieving epoch data: %v", err)
+	}
+	metrics.TaskDuration.WithLabelValues("rpc_get_epoch_data").Observe(time.Since(startGetEpochData).Seconds())
+	logger.WithFields(logrus.Fields{"duration": time.Since(startGetEpochData), "epoch": epoch}).Info("completed getting epoch-data")
+	logger.Printf("data for epoch %v retrieved, took %v", epoch, time.Since(start))
+
+	return db.SaveEpochBigtable(data)
 }
 
 // ExportEpoch will export an epoch from rpc into the database
