@@ -55,11 +55,13 @@ func main() {
 	}
 	utils.Config = cfg
 
-	db.MustInitDB(cfg.Database.Username, cfg.Database.Password, cfg.Database.Host, cfg.Database.Port, cfg.Database.Name)
-	defer db.DB.Close()
+	// db.MustInitDB(cfg.Database.Username, cfg.Database.Password, cfg.Database.Host, cfg.Database.Port, cfg.Database.Name)
+	// defer db.DB.Close()
 
-	db.MustInitFrontendDB(cfg.Frontend.Database.Username, cfg.Frontend.Database.Password, cfg.Frontend.Database.Host, cfg.Frontend.Database.Port, cfg.Frontend.Database.Name, cfg.Frontend.SessionSecret)
-	defer db.FrontendDB.Close()
+	// db.MustInitFrontendDB(cfg.Frontend.Database.Username, cfg.Frontend.Database.Password, cfg.Frontend.Database.Host, cfg.Frontend.Database.Port, cfg.Frontend.Database.Name, cfg.Frontend.SessionSecret)
+	// defer db.FrontendDB.Close()
+
+	db.MustInitBigtable()
 
 	if utils.Config.Metrics.Enabled {
 		go metrics.MonitorDB(db.DB)
@@ -117,8 +119,8 @@ func main() {
 			return
 		}
 
-		go services.StartHistoricPriceService()
-		go exporter.Start(rpcClient)
+		// go services.StartHistoricPriceService()
+		exporter.Start(rpcClient)
 	}
 
 	if cfg.Frontend.Enabled {

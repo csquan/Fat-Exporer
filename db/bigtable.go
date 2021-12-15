@@ -11,19 +11,13 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigtable"
-	"github.com/sirupsen/logrus"
-	"google.golang.org/api/option"
 )
 
 func SaveEpochBigtable(data *types.EpochData) error {
 
+	farFutureEpoch := uint64(18446744073709551615)
+
 	ctx := context.Background()
-
-	client, err := bigtable.NewClient(ctx, "ethermine-198109", "ethermine-stats", option.WithCredentialsJSON([]byte(utils.Config.Bigtable.Key)))
-
-	if err != nil {
-		return err
-	}
 
 	if !data.EpochParticipationStats.Finalized {
 		return fmt.Errorf("cannot export non-finalized epoch %v to bigtable", data.Epoch)
@@ -58,7 +52,7 @@ func SaveEpochBigtable(data *types.EpochData) error {
 
 	validatorBalanceAverage := new(big.Int).Div(validatorBalanceSum, new(big.Int).SetInt64(int64(validatorsCount)))
 
-	tbl := client.Open(utils.Config.Bigtable.Prefix + "_epochs")
+	tbl := BTClient.Open(utils.Config.Bigtable.Prefix + "_epochs")
 
 	columnFamilyName := "default"
 
@@ -67,7 +61,7 @@ func SaveEpochBigtable(data *types.EpochData) error {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 
-	err = enc.Encode(&types.BigtableEpoch{
+	err := enc.Encode(&types.BigtableEpoch{
 		Epoch:                   data.Epoch,
 		BlocksCount:             len(data.Blocks),
 		ProposerSlashingsCount:  proposerSlashingsCount,
@@ -94,9 +88,10 @@ func SaveEpochBigtable(data *types.EpochData) error {
 	if err != nil {
 		return fmt.Errorf("error writing epoch data: %v", err)
 	}
+	logger.Infof("exported epoch statistics data")
 
 	// save the validator balances
-	tbl = client.Open(utils.Config.Bigtable.Prefix + "_vaidator_balance_history")
+	tbl = BTClient.Open(utils.Config.Bigtable.Prefix + "_vaidator_balance_history")
 	muts := make([]*bigtable.Mutation, 0, 100000)
 	keys := make([]string, 0, 100000)
 
@@ -118,64 +113,90 @@ func SaveEpochBigtable(data *types.EpochData) error {
 		muts = append(muts, mut)
 		keys = append(keys, key)
 
-		if i%90000 == 0 {
-			logrus.Infof("wrting validator balances batch %v to bigtable", i)
+		if i != 0 && i%90000 == 0 {
+			logger.Infof("wrting validator balances batch %v to bigtable", i)
 			start := time.Now()
 			if _, err := tbl.ApplyBulk(ctx, keys, muts); err != nil {
 				return fmt.Errorf("error writing validator balances batch to bigtable: %v", err)
 			}
-			logrus.Infof("writing batch took %v", time.Since(start))
+			logger.Infof("writing batch took %v", time.Since(start))
 			muts = make([]*bigtable.Mutation, 0, 100000)
 			keys = make([]string, 0, 100000)
 		}
 	}
 	if len(muts) > 0 {
-		logrus.Infof("wrting final validator balances batch to bigtable")
+		logger.Infof("writing final validator balances batch to bigtable")
+		start := time.Now()
+		if _, err := tbl.ApplyBulk(ctx, keys, muts); err != nil {
+			return fmt.Errorf("error writing final validator balances batch to bigtable: %v", err)
+		}
+		logger.Infof("writing batch took %v", time.Since(start))
+	}
+
+	//save the validators
+	tbl = BTClient.Open(utils.Config.Bigtable.Prefix + "_validators")
+	muts = make([]*bigtable.Mutation, 0, 100000)
+	keys = make([]string, 0, 100000)
+
+	for i, validator := range data.Validators {
+		mut := bigtable.NewMutation()
+		key := fmt.Sprintf("%v#%v", validator.Index, data.Epoch)
+
+		var buf bytes.Buffer
+		enc := gob.NewEncoder(&buf)
+
+		btv := &types.BigtableValidator{
+			PublicKey:                  validator.PublicKey,
+			WithdrawableEpoch:          validator.WithdrawableEpoch,
+			WithdrawalCredentials:      validator.WithdrawalCredentials,
+			Balance:                    validator.Balance,
+			EffectiveBalance:           validator.EffectiveBalance,
+			Slashed:                    validator.Slashed,
+			ActivationEligibilityEpoch: validator.ActivationEligibilityEpoch,
+			ActivationEpoch:            validator.ActivationEpoch,
+			ExitEpoch:                  validator.ExitEpoch,
+			Balance1d:                  validator.Balance1d,
+			Balance7d:                  validator.Balance7d,
+			Balance31d:                 validator.Balance31d,
+		}
+
+		if validator.ExitEpoch <= data.Epoch && validator.Slashed {
+			btv.Status = "slashed"
+		} else if validator.ExitEpoch <= data.Epoch {
+			btv.Status = "exited"
+		} else if validator.ActivationEligibilityEpoch == farFutureEpoch {
+			btv.Status = "deposited"
+		} else if validator.ActivationEpoch > data.Epoch {
+			btv.Status = "pending"
+		} else if validator.ActivationEpoch == data.Epoch {
+			btv.Status = "pending"
+		}
+
+		err := enc.Encode(btv)
+		if err != nil {
+			return fmt.Errorf("error encoding validator: %v", err)
+		}
+		mut.Set(columnFamilyName, "data", 0, buf.Bytes())
+		muts = append(muts, mut)
+		keys = append(keys, key)
+
+		if i%90000 == 0 {
+			logger.Infof("wrting validator balances batch %v to bigtable", i)
+			start := time.Now()
+			if _, err := tbl.ApplyBulk(ctx, keys, muts); err != nil {
+				return fmt.Errorf("error writing validator balances batch to bigtable: %v", err)
+			}
+			logger.Infof("writing batch took %v", time.Since(start))
+			muts = make([]*bigtable.Mutation, 0, 100000)
+			keys = make([]string, 0, 100000)
+		}
+	}
+	if len(muts) > 0 {
+		logger.Infof("wrting final validator balances batch to bigtable")
 		if _, err := tbl.ApplyBulk(ctx, keys, muts); err != nil {
 			return fmt.Errorf("error writing final validator balances batch to bigtable: %v", err)
 		}
 	}
-
-	// save the validators
-	// tbl = client.Open(utils.Config.Bigtable.Prefix + "_validators")
-	// muts = make([]*bigtable.Mutation, 0, 100000)
-	// keys = make([]string, 0, 100000)
-
-	// for i, validator := range data.Validators {
-	// 	mut := bigtable.NewMutation()
-	// 	key := fmt.Sprintf("%v#%v", validator.Index, data.Epoch)
-
-	// 	var buf bytes.Buffer
-	// 	enc := gob.NewEncoder(&buf)
-	// 	err := enc.Encode(&types.BigtableValidator{
-	// 		Balance:          validator.Balance,
-	// 		EffectiveBalance: validator.EffectiveBalance,
-	// 	})
-
-	// 	if err != nil {
-	// 		return fmt.Errorf("error encoding validator balance: %v", err)
-	// 	}
-	// 	mut.Set(columnFamilyName, "data", 0, buf.Bytes())
-	// 	muts = append(muts, mut)
-	// 	keys = append(keys, key)
-
-	// 	if i%90000 == 0 {
-	// 		logrus.Infof("wrting validator balances batch %v to bigtable", i)
-	// 		start := time.Now()
-	// 		if _, err := tbl.ApplyBulk(ctx, keys, muts); err != nil {
-	// 			return fmt.Errorf("error writing validator balances batch to bigtable: %v", err)
-	// 		}
-	// 		logrus.Infof("writing batch took %v", time.Since(start))
-	// 		muts = make([]*bigtable.Mutation, 0, 100000)
-	// 		keys = make([]string, 0, 100000)
-	// 	}
-	// }
-	// if len(muts) > 0 {
-	// 	logrus.Infof("wrting final validator balances batch to bigtable")
-	// 	if _, err := tbl.ApplyBulk(ctx, keys, muts); err != nil {
-	// 		return fmt.Errorf("error writing final validator balances batch to bigtable: %v", err)
-	// 	}
-	// }
 
 	return nil
 }

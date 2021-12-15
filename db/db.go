@@ -2,6 +2,7 @@ package db
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"eth2-exporter/metrics"
 	"eth2-exporter/types"
@@ -14,7 +15,9 @@ import (
 	"strings"
 	"time"
 
+	"cloud.google.com/go/bigtable"
 	"github.com/jmoiron/sqlx"
+	"google.golang.org/api/option"
 
 	"github.com/lib/pq"
 	"github.com/prysmaticlabs/go-bitfield"
@@ -27,6 +30,8 @@ var DBPGX *pgxpool.Conn
 
 // DB is a pointer to the explorer-database
 var DB *sqlx.DB
+
+var BTClient *bigtable.Client
 
 var logger = logrus.StandardLogger().WithField("module", "db")
 
@@ -53,6 +58,16 @@ func mustInitDB(username, password, host, port, name string) *sqlx.DB {
 	dbConn.SetConnMaxLifetime(time.Second * 60)
 
 	return dbConn
+}
+
+func MustInitBigtable() {
+	ctx := context.Background()
+	client, err := bigtable.NewClient(ctx, utils.Config.Bigtable.Project, utils.Config.Bigtable.Instance, option.WithCredentialsJSON([]byte(utils.Config.Bigtable.Key)))
+
+	if err != nil {
+		logger.Fatal(err)
+	}
+	BTClient = client
 }
 
 func MustInitDB(username, password, host, port, name string) {

@@ -5,6 +5,7 @@ import (
 	"eth2-exporter/db"
 	"eth2-exporter/metrics"
 	"eth2-exporter/rpc"
+	"eth2-exporter/state"
 	"eth2-exporter/types"
 	"eth2-exporter/utils"
 	"fmt"
@@ -24,7 +25,6 @@ var epochBlacklist = make(map[uint64]uint64)
 
 // Start will start the export of data from rpc into the database
 func Start(client rpc.Client) error {
-
 	// go performanceDataUpdater()
 	// go networkLivenessUpdater(client)
 	// go eth1DepositsExporter()
@@ -60,13 +60,18 @@ func Start(client rpc.Client) error {
 			logger.Fatal(err)
 		}
 
+		err = state.InitValidatorState()
+		if err != nil {
+			logger.Fatal(err)
+		}
 		for epoch := uint64(1); epoch <= head.HeadEpoch; epoch++ {
-			err := ExportEpoch(epoch, client)
 
+			err := ExportEpochBigtable(epoch, client)
 			if err != nil {
 				logger.Error(err)
 			}
 		}
+		return nil
 	}
 
 	if utils.Config.Indexer.FixCanonOnStartup {
@@ -232,6 +237,8 @@ func Start(client rpc.Client) error {
 			lastExportedSlot = block.Slot
 		}
 	}
+
+	return nil
 }
 
 // Will ensure the db is fully in sync with the node
@@ -459,7 +466,7 @@ func ExportEpochBigtable(epoch uint64, client rpc.Client) error {
 	logger.WithFields(logrus.Fields{"duration": time.Since(startGetEpochData), "epoch": epoch}).Info("completed getting epoch-data")
 	logger.Printf("data for epoch %v retrieved, took %v", epoch, time.Since(start))
 
-	return db.SaveEpochBigtable(data)
+	return state.UpdateValidatorState(data)
 }
 
 // ExportEpoch will export an epoch from rpc into the database

@@ -7,8 +7,10 @@ import (
 // Config is a struct to hold the configuration data
 type Config struct {
 	Bigtable struct {
-		Key    string `yaml:"key" envconfig:"BIGTABLE_KEY"`
-		Prefix string `yaml:"prefix" envconfig:"BIGTABLE_PREFIX"`
+		Key      string `yaml:"key" envconfig:"BIGTABLE_KEY"`
+		Prefix   string `yaml:"prefix" envconfig:"BIGTABLE_PREFIX"`
+		Project  string `yaml:"project" envconfig:"BIGTABLE_PROJECT"`
+		Instance string `yaml:"instance" envconfig:"BIGTABLE_INSTANCE"`
 	} `yaml:"bigtable"`
 	Database struct {
 		Username string `yaml:"user" envconfig:"DB_USERNAME"`

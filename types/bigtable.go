@@ -35,4 +35,6 @@ type BigtableValidator struct {
 	Balance1d                  uint64
 	Balance7d                  uint64
 	Balance31d                 uint64
+	Status                     string
+	BalanceActivation          uint64
 }

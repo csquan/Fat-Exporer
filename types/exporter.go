@@ -76,6 +76,14 @@ type Validator struct {
 	Balance7d         uint64 `db:"balance7d"`
 	Balance31d        uint64 `db:"balance31d"`
 	Status            string `db:"status"`
+
+	LastAttestationSlot uint64
+	LastProposalSlot    uint64
+}
+
+type ValidatorState struct {
+	Validators map[uint64]*Validator
+	Epoch      uint64
 }
 
 // ValidatorQueue is a struct to hold validator queue data
