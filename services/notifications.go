@@ -106,10 +106,10 @@ func collectNotifications() map[uint64]map[types.EventName][]types.Notification 
 		logger.Errorf("error collecting rocket pool collateral notifications: %v", err)
 	}
 
-	err = collectRocketPoolWithdrawableNotifications(notificationsByUserID, types.RocketPoolWithdrawableEventName)
-	if err != nil {
-		logger.Errorf("error collecting rocket pool collateral notifications: %v", err)
-	}
+	// err = collectRocketPoolWithdrawableNotifications(notificationsByUserID, types.RocketPoolWithdrawableEventName)
+	// if err != nil {
+	// 	logger.Errorf("error collecting rocket pool collateral notifications: %v", err)
+	// }
 
 	return notificationsByUserID
 }
@@ -694,7 +694,7 @@ func (n *rocketPoolCollateralNotification) GetEventName() types.EventName {
 }
 
 func (n *rocketPoolCollateralNotification) GetInfo(includeUrl bool) string {
-	return fmt.Sprintf(`Rocket Pool Node %v has an invalid RPL stake amount. The current stake is %v and should be between %v < RPL Stake < %v.`, n.NodeAddress, n.Stake, n.MinStake, n.MaxStake)
+	return fmt.Sprintf(`Rocket Pool Node %v has an invalid RPL stake amount. The current stake is %v RPL and should be between %v < RPL Stake < %v.`, n.NodeAddress, fmt.Sprintf("%.2f", float64(n.Stake)/1e18), fmt.Sprintf("%.2f", float64(n.MinStake)/1e18), fmt.Sprintf("%.2f", float64(n.MaxStake)/1e18))
 }
 
 func (n *rocketPoolCollateralNotification) GetTitle() string {
@@ -726,16 +726,20 @@ func collectRocketPoolCollateralNotifications(notificationsByUserID map[uint64]m
 	}
 
 	events := make([]dbResult, 0)
-	for i := 0; i < runs; i++ {
+	batchSize := 5000
+	dataLen := len(pubkeys)
+	for i := 0; i < dataLen; i += batchSize {
 		var keys [][]byte
-		if i == (runs - 1) {
-			keys = pubkeys[i*5000:]
-		} else {
-			keys = pubkeys[i*5000 : (i+1)*5000]
+		start := i
+		end := i + batchSize
+
+		if dataLen < end {
+			end = dataLen
 		}
 
+		keys = pubkeys[start:end]
+
 		var partial []dbResult
-		// OR rn.stake > rn.max_rpl_stake
 		err = db.DB.Select(&partial, `
 			  SELECT 
 				  *
@@ -744,8 +748,8 @@ func collectRocketPoolCollateralNotifications(notificationsByUserID map[uint64]m
 				INNER JOIN 
 					rocketpool_minipools rm on rn.address = rm.node_address
 				WHERE
-					rn.stake < rn.min_rpl_stake 
-			`, latestEpoch, latestSlot, pq.ByteaArray(keys))
+					rm.pubkey = ANY($1) AND rn.stake < rn.min_rpl_stake
+			`, pq.ByteaArray(keys))
 		if err != nil {
 			return err
 		}
