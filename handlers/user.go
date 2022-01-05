@@ -1445,7 +1445,7 @@ func UserValidatorWatchlistAdd(w http.ResponseWriter, r *http.Request) {
 
 	balance := FormValueOrJSON(r, "balance_decreases")
 	if balance == "on" {
-		err := db.AddSubscription(user.UserID, utils.Config.Chain.Phase0.ConfigName, types.ValidatorBalanceDecreasedEventName, pubKey, 0)
+		err := db.AddSubscription(user.UserID, utils.GetNetwork(), types.ValidatorBalanceDecreasedEventName, pubKey, 0)
 		if err != nil {
 			logger.Errorf("error could not ADD subscription for user %v eventName %v eventfilter %v: %v", user.UserID, types.ValidatorBalanceDecreasedEventName, pubKey, err)
 			ErrorOrJSONResponse(w, r, "Internal server error", http.StatusInternalServerError)
@@ -1454,7 +1454,7 @@ func UserValidatorWatchlistAdd(w http.ResponseWriter, r *http.Request) {
 	}
 	slashed := FormValueOrJSON(r, "validator_slashed")
 	if slashed == "on" {
-		err := db.AddSubscription(user.UserID, utils.Config.Chain.Phase0.ConfigName, types.ValidatorGotSlashedEventName, pubKey, 0)
+		err := db.AddSubscription(user.UserID, utils.GetNetwork(), types.ValidatorGotSlashedEventName, pubKey, 0)
 		if err != nil {
 			logger.Errorf("error could not ADD subscription for user %v eventName %v eventfilter %v: %v", user.UserID, types.ValidatorGotSlashedEventName, pubKey, err)
 			ErrorOrJSONResponse(w, r, "Internal server error", http.StatusInternalServerError)
@@ -1463,7 +1463,7 @@ func UserValidatorWatchlistAdd(w http.ResponseWriter, r *http.Request) {
 	}
 	proposalSubmitted := FormValueOrJSON(r, "validator_proposal_submitted")
 	if proposalSubmitted == "on" {
-		err := db.AddSubscription(user.UserID, utils.Config.Chain.Phase0.ConfigName, types.ValidatorExecutedProposalEventName, pubKey, 0)
+		err := db.AddSubscription(user.UserID, utils.GetNetwork(), types.ValidatorExecutedProposalEventName, pubKey, 0)
 		if err != nil {
 			logger.Errorf("error could not ADD subscription for user %v eventName %v eventfilter %v: %v", user.UserID, types.ValidatorGotSlashedEventName, pubKey, err)
 			ErrorOrJSONResponse(w, r, "Internal server error", http.StatusInternalServerError)
@@ -1472,7 +1472,7 @@ func UserValidatorWatchlistAdd(w http.ResponseWriter, r *http.Request) {
 	}
 	proposalMissed := FormValueOrJSON(r, "validator_proposal_missed")
 	if proposalMissed == "on" {
-		err := db.AddSubscription(user.UserID, utils.Config.Chain.Phase0.ConfigName, types.ValidatorMissedProposalEventName, pubKey, 0)
+		err := db.AddSubscription(user.UserID, utils.GetNetwork(), types.ValidatorMissedProposalEventName, pubKey, 0)
 		if err != nil {
 			logger.Errorf("error could not ADD subscription for user %v eventName %v eventfilter %v: %v", user.UserID, types.ValidatorGotSlashedEventName, pubKey, err)
 			ErrorOrJSONResponse(w, r, "Internal server error", http.StatusInternalServerError)
@@ -1481,9 +1481,18 @@ func UserValidatorWatchlistAdd(w http.ResponseWriter, r *http.Request) {
 	}
 	attestationMissed := FormValueOrJSON(r, "validator_attestation_missed")
 	if attestationMissed == "on" {
-		err := db.AddSubscription(user.UserID, utils.Config.Chain.Phase0.ConfigName, types.ValidatorMissedAttestationEventName, pubKey, 0)
+		err := db.AddSubscription(user.UserID, utils.GetNetwork(), types.ValidatorMissedAttestationEventName, pubKey, 0)
 		if err != nil {
 			logger.Errorf("error could not ADD subscription for user %v eventName %v eventfilter %v: %v", user.UserID, types.ValidatorGotSlashedEventName, pubKey, err)
+			ErrorOrJSONResponse(w, r, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
+	rocketPoolCollateral := FormValueOrJSON(r, "rocketpool_minipool_collateral")
+	if rocketPoolCollateral == "on" {
+		err := db.AddSubscription(user.UserID, utils.GetNetwork(), types.RocketPoolCollateralEventName, pubKey, 0)
+		if err != nil {
+			logger.Errorf("error could not ADD subscription for user %v eventName %v eventfilter %v: %v", user.UserID, types.RocketPoolCollateralEventName, pubKey, err)
 			ErrorOrJSONResponse(w, r, "Internal server error", http.StatusInternalServerError)
 			return
 		}
