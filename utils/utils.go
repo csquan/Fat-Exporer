@@ -33,6 +33,7 @@ import (
 
 	"github.com/kataras/i18n"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 )
 
@@ -407,7 +408,6 @@ func SqlRowsToJSON(rows *sql.Rows) ([]interface{}, error) {
 		scanArgs := make([]interface{}, count)
 
 		for i, v := range columnTypes {
-			//log.Printf("name: %v, type: %v", v.Name(), v.DatabaseTypeName())
 			switch v.DatabaseTypeName() {
 			case "VARCHAR", "TEXT", "UUID":
 				scanArgs[i] = new(sql.NullString)
@@ -423,6 +423,9 @@ func SqlRowsToJSON(rows *sql.Rows) ([]interface{}, error) {
 				break
 			case "TIMESTAMP":
 				scanArgs[i] = new(sql.NullTime)
+				break
+			case "_INT4", "_INT8":
+				scanArgs[i] = new(pq.Int64Array)
 				break
 			default:
 				scanArgs[i] = new(sql.NullString)
@@ -592,7 +595,7 @@ func BitAtVectorReversed(b []byte, i int) bool {
 }
 
 func GetNetwork() string {
-	if Config.Chain.Phase0.ConfigName == "" {
+	if Config.Chain.Network != "" {
 		return strings.ToLower(Config.Chain.Network)
 	}
 	return strings.ToLower(Config.Chain.Phase0.ConfigName)

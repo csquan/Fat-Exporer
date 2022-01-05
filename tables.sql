@@ -128,7 +128,8 @@ create table sync_committees
 (
     period         int not null,
     validatorindex int not null,
-    primary key (period, validatorindex)
+    committeeindex int not null,
+    primary key (period, validatorindex, committeeindex)
 );
 
 drop table if exists validator_balances_p;
@@ -293,6 +294,7 @@ create table blocks
 create index idx_blocks_proposer on blocks (proposer);
 create index idx_blocks_epoch on blocks (epoch);
 create index idx_blocks_graffiti_text on blocks using gin (graffiti_text gin_trgm_ops);
+create index idx_blocks_blockrootstatus on blocks (blockroot, status);
 
 drop table if exists blocks_proposerslashings;
 create table blocks_proposerslashings

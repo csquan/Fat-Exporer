@@ -116,20 +116,33 @@ func GetTaggedValidators(filter WatchlistFilter) ([]*types.TaggedValidators, err
 	if err != nil {
 		return nil, err
 	}
-	var validators []*types.Validator
-	if filter.JoinValidators && filter.Validators != nil {
+	if filter.JoinValidators && filter.Validators == nil {
+		pubkeys := make([][]byte, 0, len(list))
+		for _, li := range list {
+			pubkeys = append(pubkeys, li.ValidatorPublickey)
+		}
+		pubBytea := pq.ByteaArray(pubkeys)
+		filter.Validators = &pubBytea
+	}
+
+	validators := make([]*types.Validator, 0, len(list))
+	if filter.JoinValidators {
 		err := DB.Select(&validators, `SELECT balance, pubkey, validatorindex FROM validators WHERE pubkey = ANY($1) ORDER BY pubkey desc`, *filter.Validators)
 		if err != nil {
 			return nil, err
 		}
 		if len(list) != len(validators) {
 			logger.Errorf("error could not get validators for watchlist. Expected to retrieve %v validators but got %v", len(list), len(validators))
+			return list, nil
 		}
 		for i, li := range list {
-			li.Validator = validators[i]
+			if li == nil {
+				logger.Errorf("empty validator entry", list[i])
+			} else {
+				li.Validator = validators[i]
+			}
 		}
 	}
-
 	return list, nil
 }
 
