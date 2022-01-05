@@ -15,13 +15,6 @@
                         and receive email notifications.</p>
                     <div class="form-group">
                         <div class="form-check">
-                            <input class="form-check-input" id="balance_decreases" type="checkbox"
-                                name="balance_decreases">
-                            <label class="form-check-label" for="balance_decreases">
-                                balance decreases
-                            </label>
-                        </div>
-                        <div class="form-check">
                             <input class="form-check-input" id="validator_slashed" type="checkbox"
                                 name="validator_slashed">
                             <label class="form-check-label" for="validator_slashed">
@@ -49,11 +42,20 @@
                                 missed attestations
                             </label>
                         </div>
+                        {{if .IsRocketpool}}
+                        <div class="form-check">
+                            <input class="form-check-input" id="rocketpool_minipool_collateral" type="checkbox"
+                                name="rocketpool_minipool_collateral">
+                            <label class="form-check-label" for="rocketpool_minipool_collateral">
+                                rocketpool collateral
+                            </label>
+                        </div>
+                        {{end}}
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Add To Watchlist</button>
+                    <button type="button" class="btn btn-secondary text-white" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary text-white">Add To Notifications</button>
                 </div>
             </div>
         </div>

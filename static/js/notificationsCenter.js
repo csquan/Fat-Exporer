@@ -1,6 +1,6 @@
 var csrfToken = ""
 
-const VALIDATOR_EVENTS = ['validator_attestation_missed', 'validator_proposal_missed', 'validator_proposal_submitted', 'validator_got_slashed']
+const VALIDATOR_EVENTS = ['validator_attestation_missed', 'validator_proposal_missed', 'validator_proposal_submitted', 'validator_got_slashed', 'rocketpool_minipool_collateral']
 
 const MONITORING_EVENTS = ['monitoring_machine_offline', 'monitoring_hdd_almostfull', 'monitoring_cpu_load']
 
@@ -478,23 +478,7 @@ function loadValidatorsData(data) {
               n = n[n.length - 1]
               if (VALIDATOR_EVENTS.includes(n)) {
                 hasItems = true
-                let badgeColor = ""
-                let textColor = ""
-                switch (n) {
-                  case 'validator_attestation_missed':
-                    badgeColor = 'badge-light'
-                    break
-                  case 'validator_proposal_submitted':
-                    badgeColor = 'badge-light'
-                    break
-                  case 'validator_proposal_missed':
-                    badgeColor = 'badge-light'
-                    break
-                  case 'validator_got_slashed':
-                    badgeColor = 'badge-light'
-                    break
-                }
-                notifications += `<span style="font-size: 12px; font-weight: 500;" class="badge badge-pill ${badgeColor} ${textColor} badge-custom-size mr-1 my-1">${n.replace('validator', "").replaceAll('_', " ")}</span>`
+                notifications += `<span style="font-size: 12px; font-weight: 500;" class="badge badge-pill badge-light badge-custom-size mr-1 my-1">${n.replace('validator', "").replace('rocketpool', '').replaceAll('_', " ")}</span>`
               }
             }
             if (!hasItems) {
@@ -731,18 +715,17 @@ $(document).ready(function () {
     // get the selected row (single row selected)
     let rowData = $('#validators-notifications').DataTable().row($('#' + $(this).attr('rowId'))).data()
     if (rowData && rowData.Index) {
+      console.log('rowdata', rowData)
       $('#selected-validators-events-container').append(
         `<span style="font-size: 12px; font-weight: 500;" id="validator-event-badge" class="d-inline-block badge badge-pill badge-light badge-custom-size mr-2 mb-2" pk=${rowData.Pubkey}>
         		Validator ${rowData.Index}
           	<i class="fas fa-times ml-2" style="cursor: pointer;" title="Remove from selected validators" onclick="remove_item_from_event_container('${rowData.Pubkey}')"></i>
         </span>`
       )
-      for (let event of $('#manage_all_events :input')) {
-        for (let item of rowData.Notification) {
-          let n = item.Notification.split(':')
-          n = n[n.length - 1]
-          $(`#manage_${n} input#${$(event).attr('id')}`).prop('checked', true)
-        }
+      for (let item of rowData.Notification) {
+        let n = item.Notification.split(':')
+        n = n[n.length - 1]
+        $(`#manage_${n} input`).prop('checked', true)
       }
     } else {
       // get the selected rows (mutiple rows selected)
@@ -750,6 +733,7 @@ $(document).ready(function () {
       $('#selected-validators-events-container').prev('span').text('')
       $('#selected-validators-events-container').html('')
       $("#selected-validators-events-container ~ div").css('opacity', 1)
+      
       if (rowsSelected && rowsSelected.length) {
         $('#update-subs-button').attr('disabled', false)
         for (let i = 0; i < rowsSelected.length; i++) {
