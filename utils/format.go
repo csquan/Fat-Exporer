@@ -18,6 +18,7 @@ import (
 
 	"github.com/protolambda/ztyp/bitfields"
 
+	"github.com/ethereum/go-ethereum/common"
 	eth1common "github.com/ethereum/go-ethereum/common"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -873,4 +874,15 @@ func FormatEth1TxStatus(status uint64) template.HTML {
 // FormatTimestamp will return a timestamp formated as html. This is supposed to be used together with client-side js
 func FormatTimestampUInt64(ts uint64) template.HTML {
 	return template.HTML(fmt.Sprintf("<span class=\"timestamp\" title=\"%v\" data-toggle=\"tooltip\" data-placement=\"top\" data-timestamp=\"%d\"></span>", time.Unix(int64(ts), 0), ts))
+}
+
+// FormatEth1AddressFull will return the eth1-address formated as html
+func FormatEth1AddressFull(addr common.Address) template.HTML {
+	copyBtn := CopyButton(addr.String())
+
+	if !Config.Chain.Mainnet {
+		return template.HTML(fmt.Sprintf("<a href=\"https://goerli.etherscan.io/address/0x%x\" class=\"text-monospace\">%s</a>%s", addr, addr.String(), copyBtn))
+	}
+
+	return template.HTML(fmt.Sprintf("<a href=\"https://etherchain.org/account/0x%x\" class=\"text-monospace\">%s</a>%s", addr, addr.String(), copyBtn))
 }

@@ -42,11 +42,11 @@
                     </div>      
                     <div class="row p-3 mx-0">
                         <div class="col-md-3">From:</div>
-                        <div class="col-md-9">0x0f35b0753e261375c9a6cb44316b4bdc7e765509</div>
+                        <div class="col-md-9">{{formatEth1AddressFull .From}}</div>
                     </div>    
                     <div class="row border-bottom p-3 mx-0">
                         <div class="col-md-3">To:</div>
-                        <div class="col-md-9">{{if .TargetIsContract}}Contract {{end}}{{.GethTx.To}}</div>
+                        <div class="col-md-9">{{if .TargetIsContract}}Contract {{end}}{{formatEth1AddressFull .GethTx.To}}</div>
                     </div>    
                     <div class="row p-3 mx-0">
                         <div class="col-md-3">Value:</div>

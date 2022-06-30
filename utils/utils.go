@@ -145,6 +145,7 @@ func GetTemplateFuncs() template.FuncMap {
 		"formatBalanceWei":      FormatBalanceWei,
 		"formatEth1TxStatus":    FormatEth1TxStatus,
 		"formatTimestampUInt64": FormatTimestampUInt64,
+		"formatEth1AddressFull": FormatEth1AddressFull,
 	}
 }
 
