@@ -140,6 +140,11 @@ func GetTemplateFuncs() template.FuncMap {
 		},
 		"stringsJoin":     strings.Join,
 		"formatAddCommas": FormatAddCommas,
+
+		// ETH1 related formatting
+		"formatBalanceWei":      FormatBalanceWei,
+		"formatEth1TxStatus":    FormatEth1TxStatus,
+		"formatTimestampUInt64": FormatTimestampUInt64,
 	}
 }
 
