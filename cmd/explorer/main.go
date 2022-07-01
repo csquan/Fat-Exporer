@@ -6,6 +6,7 @@ import (
 	ethclients "eth2-exporter/ethClients"
 	"eth2-exporter/exporter"
 	"eth2-exporter/handlers"
+	"eth2-exporter/metadata"
 	"eth2-exporter/metrics"
 	"eth2-exporter/price"
 	"eth2-exporter/rpc"
@@ -218,6 +219,7 @@ func main() {
 		services.Init() // Init frontend services
 		price.Init()
 		ethclients.Init()
+		metadata.Init()
 
 		logrus.Infof("frontend services initiated")
 

@@ -5,12 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"math/big"
 	"net/http"
 	"time"
-
-	"github.com/ethereum/go-ethereum/common"
-	geth_types "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/lib/pq"
 )
@@ -710,17 +706,6 @@ type EpochPageData struct {
 	MissedCount           uint64
 	ScheduledCount        uint64
 	OrphanedCount         uint64
-}
-
-// TxPageData is a struct to hold detailed tx data for the tx page
-type TxPageData struct {
-	From             common.Address
-	GethTx           *geth_types.Transaction
-	Receipt          *geth_types.Receipt
-	Header           *geth_types.Header
-	IsPending        bool
-	TargetIsContract bool
-	TxFee            *big.Int
 }
 
 // EpochPageMinMaxSlot is a struct for the min/max epoch data
