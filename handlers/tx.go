@@ -15,11 +15,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var txTemplate = template.Must(template.New("tx").Funcs(utils.GetTemplateFuncs()).ParseFiles("templates/layout.html", "templates/tx.html"))
 var txNotFoundTemplate = template.Must(template.New("txnotfound").Funcs(utils.GetTemplateFuncs()).ParseFiles("templates/layout.html", "templates/txnotfound.html"))
 
 // Tx will show the tx using a go template
 func Tx(w http.ResponseWriter, r *http.Request) {
+	var txTemplate = template.Must(template.New("tx").Funcs(utils.GetTemplateFuncs()).ParseFiles("templates/layout.html", "templates/tx.html"))
 	w.Header().Set("Content-Type", "text/html")
 	vars := mux.Vars(r)
 	txHashString := strings.Replace(vars["txHash"], "0x", "", -1)

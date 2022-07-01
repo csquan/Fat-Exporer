@@ -59,7 +59,29 @@
                     <div class="row p-3 mx-0">
                         <div class="col-md-3">Gas Price:</div>
                         <div class="col-md-9">{{formatBalanceWei .GethTx.GasPrice "GWei"}}</div>
-                    </div>                    
+                    </div>
+                    {{range .Events}}
+                    <div class="row border-top p-3 mx-0">
+                        <div class="col-md-3">Address:</div>
+                        <div class="col-md-9">{{.Address}}</div>
+                    </div>
+                    <div class="row p-3 mx-0">
+                        <div class="col-md-3">Name:</div>
+                        <div class="col-md-9">{{.Name}}</div>
+                    </div>
+                    <div class="row p-3 mx-0">
+                        <div class="col-md-3">Topics:</div>
+                        <div class="col-md-9">{{.Topics}}</div>
+                    </div>
+                    <div class="row p-3 mx-0">
+                        <div class="col-md-3">Data:</div>
+                        <div class="col-md-9">
+                            {{range $key, $value :=.Data}}
+                            <div>{{$key}}: {{$value}}</div>
+                            {{end}}
+                        </div>
+                    </div>
+                    {{end}}                
                 </div>
             </div>
         </div>

@@ -1,12 +1,20 @@
 package metadata
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"eth2-exporter/types"
 	"eth2-exporter/utils"
 	"fmt"
+	"io/ioutil"
 	"math/big"
+	"net/http"
+	"strings"
+	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	geth_types "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -52,36 +60,82 @@ func GetEth1Transaction(hash common.Hash) (*types.Eth1TxData, error) {
 		return nil, fmt.Errorf("error retrieving data for tx %v: tx is still pending", hash)
 	}
 
+	txPageData := &types.Eth1TxData{
+		GethTx:    tx,
+		IsPending: pending,
+		Events:    make([]*types.Eth1EventData, 0, 10),
+	}
+
 	receipt, err := GetTransactionReceipt(hash)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving receipt data for tx %v: %v", hash, err)
 	}
+	txPageData.Receipt = receipt
+	txPageData.TxFee = new(big.Int).Mul(tx.GasPrice(), new(big.Int).SetUint64(receipt.GasUsed))
 
 	code, err := GetCodeAt(*tx.To())
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving code data for tx %v receipient %v: %v", hash, tx.To(), err)
 	}
+	txPageData.TargetIsContract = len(code) != 0
 
 	header, err := GetBlockHeaderByHash(receipt.BlockHash)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving block header data for tx %v: %v", hash, err)
 	}
+	txPageData.Header = header
 
 	msg, err := tx.AsMessage(geth_types.NewLondonSigner(tx.ChainId()), header.BaseFee)
 	if err != nil {
 		return nil, fmt.Errorf("error converting tx %v to message: %v", hash, err)
 	}
-	txPageData := &types.Eth1TxData{
-		GethTx:           tx,
-		IsPending:        pending,
-		Receipt:          receipt,
-		TargetIsContract: len(code) != 0,
-		From:             msg.From(),
-		Header:           header,
-		TxFee:            new(big.Int).Mul(tx.GasPrice(), new(big.Int).SetUint64(receipt.GasUsed)),
+	txPageData.From = msg.From()
+
+	if len(receipt.Logs) > 0 {
+		for _, log := range receipt.Logs {
+			contractAbi, err := GetABIForContract(log.Address)
+
+			if err != nil {
+				logrus.Errorf("error retrieving abi for contract %v: %v", tx.To(), err)
+			} else {
+				boundContract := bind.NewBoundContract(*tx.To(), *contractAbi, nil, nil, nil)
+
+				for name, event := range contractAbi.Events {
+
+					if bytes.Equal(event.ID.Bytes(), log.Topics[0].Bytes()) {
+						logData := make(map[string]interface{})
+						err := boundContract.UnpackLogIntoMap(logData, name, *log)
+
+						if err != nil {
+							logrus.Errorf("error decoding event %v", name)
+						}
+
+						eth1Event := &types.Eth1EventData{
+							Address: log.Address,
+							Name:    event.RawName,
+							Topics:  log.Topics[0],
+							Data:    map[string]string{},
+						}
+
+						for name, val := range logData {
+							eth1Event.Data[name] = fmt.Sprintf("0x%x", val)
+						}
+
+						txPageData.Events = append(txPageData.Events, eth1Event)
+					}
+				}
+			}
+		}
+
+		//
+
+		// for _, log := range receipt.Logs {
+		// 	var unpackedLog interface{}
+		// 	boundContract.UnpackLog(unpackedLog, )
+		// }
 	}
 
-	cache.Add(cacheKey, txPageData)
+	// cache.Add(cacheKey, txPageData)
 
 	return txPageData, nil
 }
@@ -141,4 +195,116 @@ func GetTransactionReceipt(hash common.Hash) (*geth_types.Receipt, error) {
 	cache.Add(cacheKey, receipt)
 
 	return receipt, nil
+}
+
+func GetABIForContract(address common.Address) (*abi.ABI, error) {
+	cacheKey := fmt.Sprintf("abi:%s", address.String())
+	cached, found := cache.Get(cacheKey)
+	if found {
+		logrus.Infof("retrieved contract abi for address %v from cache", address)
+
+		if cached == nil {
+			return nil, fmt.Errorf("contract abi not found")
+		}
+		return cached.(*abi.ABI), nil
+	}
+
+	//Retrieve metadata.json from sourcify
+	abi, err := getABIFromSourcify(address)
+
+	if err != nil {
+		logrus.Errorf("failed to get abi for contract %v from sourcify: %v", address, err)
+		logrus.Error("trying etherscan")
+
+		abi, err = getABIFromEtherscan(address)
+
+		if err != nil {
+			logrus.Errorf("failed to get abi for contract %v from etherscan: %v", address, err)
+			cache.Add(cacheKey, nil)
+			return nil, fmt.Errorf("contract abi not found")
+		}
+		cache.Add(cacheKey, abi)
+		return abi, nil
+	}
+
+	cache.Add(cacheKey, abi)
+	return abi, nil
+}
+
+func getABIFromSourcify(address common.Address) (*abi.ABI, error) {
+	httpClient := http.Client{
+		Timeout: time.Second * 5,
+	}
+
+	resp, err := httpClient.Get(fmt.Sprintf("https://sourcify.dev/server/repository/contracts/full_match/%d/%s/metadata.json", utils.Config.Chain.DepositChainID, address.String()))
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == 200 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		data := &types.SourcifyContractMetadata{}
+		err = json.Unmarshal(body, data)
+		if err != nil {
+			return nil, err
+		}
+
+		abiString, err := json.Marshal(data.Output.Abi)
+		if err != nil {
+			return nil, err
+		}
+
+		contractAbi, err := abi.JSON(bytes.NewReader(abiString))
+		if err != nil {
+			return nil, err
+		}
+
+		return &contractAbi, nil
+	} else {
+		return nil, fmt.Errorf("sourcify contract code not found")
+	}
+
+}
+
+func getABIFromEtherscan(address common.Address) (*abi.ABI, error) {
+	httpClient := http.Client{
+		Timeout: time.Second * 5,
+	}
+
+	baseUrl := "api.etherscan.io"
+
+	if utils.Config.Chain.DepositChainID == 5 {
+		baseUrl = "api-goerli.etherscan.io"
+	}
+	resp, err := httpClient.Get(fmt.Sprintf("https://%s/api?module=contract&action=getsourcecode&address=%s&apikey=YourApiKeyToken", baseUrl, address.String()))
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == 200 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		data := &types.EtherscanContractMetadata{}
+		err = json.Unmarshal(body, data)
+		if err != nil {
+			return nil, err
+		}
+
+		contractAbi, err := abi.JSON(strings.NewReader(data.Result[0].Abi))
+		if err != nil {
+			return nil, err
+		}
+
+		return &contractAbi, nil
+	} else {
+		return nil, fmt.Errorf("sourcify contract code not found")
+	}
+
 }
