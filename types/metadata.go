@@ -10,6 +10,8 @@ import (
 // TxPageData is a struct to hold detailed tx data for the tx page
 type Eth1TxData struct {
 	From             common.Address
+	FromName         string
+	ToName           string
 	GethTx           *geth_types.Transaction
 	Receipt          *geth_types.Receipt
 	Header           *geth_types.Header
@@ -20,10 +22,11 @@ type Eth1TxData struct {
 }
 
 type Eth1EventData struct {
-	Address common.Address
-	Name    string
-	Topics  common.Hash
-	Data    map[string]string
+	Address     common.Address
+	Name        string
+	Topics      []common.Hash
+	Data        []byte
+	DecodedData map[string]string
 }
 
 type SourcifyContractMetadata struct {

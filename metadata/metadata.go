@@ -93,15 +93,24 @@ func GetEth1Transaction(hash common.Hash) (*types.Eth1TxData, error) {
 
 	if len(receipt.Logs) > 0 {
 		for _, log := range receipt.Logs {
-			contractAbi, err := GetABIForContract(log.Address)
+			contractAbi, name, err := GetABIForContract(log.Address)
 
 			if err != nil {
 				logrus.Errorf("error retrieving abi for contract %v: %v", tx.To(), err)
+				eth1Event := &types.Eth1EventData{
+					Address:     log.Address,
+					Name:        "",
+					Topics:      log.Topics,
+					Data:        log.Data,
+					DecodedData: map[string]string{},
+				}
+
+				txPageData.Events = append(txPageData.Events, eth1Event)
 			} else {
+				txPageData.ToName = name
 				boundContract := bind.NewBoundContract(*tx.To(), *contractAbi, nil, nil, nil)
 
 				for name, event := range contractAbi.Events {
-
 					if bytes.Equal(event.ID.Bytes(), log.Topics[0].Bytes()) {
 						logData := make(map[string]interface{})
 						err := boundContract.UnpackLogIntoMap(logData, name, *log)
@@ -111,18 +120,20 @@ func GetEth1Transaction(hash common.Hash) (*types.Eth1TxData, error) {
 						}
 
 						eth1Event := &types.Eth1EventData{
-							Address: log.Address,
-							Name:    event.RawName,
-							Topics:  log.Topics[0],
-							Data:    map[string]string{},
+							Address:     log.Address,
+							Name:        strings.Replace(event.String(), "event ", "", 1),
+							Topics:      log.Topics,
+							Data:        log.Data,
+							DecodedData: map[string]string{},
 						}
 
 						for name, val := range logData {
-							eth1Event.Data[name] = fmt.Sprintf("0x%x", val)
+							eth1Event.DecodedData[name] = fmt.Sprintf("0x%x", val)
 						}
 
 						txPageData.Events = append(txPageData.Events, eth1Event)
 					}
+
 				}
 			}
 		}
@@ -197,80 +208,80 @@ func GetTransactionReceipt(hash common.Hash) (*geth_types.Receipt, error) {
 	return receipt, nil
 }
 
-func GetABIForContract(address common.Address) (*abi.ABI, error) {
+func GetABIForContract(address common.Address) (*abi.ABI, string, error) {
 	cacheKey := fmt.Sprintf("abi:%s", address.String())
 	cached, found := cache.Get(cacheKey)
 	if found {
 		logrus.Infof("retrieved contract abi for address %v from cache", address)
 
 		if cached == nil {
-			return nil, fmt.Errorf("contract abi not found")
+			return nil, "", fmt.Errorf("contract abi not found")
 		}
-		return cached.(*abi.ABI), nil
+		return cached.(*abi.ABI), "", nil
 	}
 
 	//Retrieve metadata.json from sourcify
-	abi, err := getABIFromSourcify(address)
+	abi, name, err := getABIFromSourcify(address)
 
 	if err != nil {
 		logrus.Errorf("failed to get abi for contract %v from sourcify: %v", address, err)
 		logrus.Error("trying etherscan")
 
-		abi, err = getABIFromEtherscan(address)
+		abi, name, err = getABIFromEtherscan(address)
 
 		if err != nil {
 			logrus.Errorf("failed to get abi for contract %v from etherscan: %v", address, err)
 			cache.Add(cacheKey, nil)
-			return nil, fmt.Errorf("contract abi not found")
+			return nil, "", fmt.Errorf("contract abi not found")
 		}
 		cache.Add(cacheKey, abi)
-		return abi, nil
+		return abi, name, nil
 	}
 
 	cache.Add(cacheKey, abi)
-	return abi, nil
+	return abi, name, nil
 }
 
-func getABIFromSourcify(address common.Address) (*abi.ABI, error) {
+func getABIFromSourcify(address common.Address) (*abi.ABI, string, error) {
 	httpClient := http.Client{
 		Timeout: time.Second * 5,
 	}
 
 	resp, err := httpClient.Get(fmt.Sprintf("https://sourcify.dev/server/repository/contracts/full_match/%d/%s/metadata.json", utils.Config.Chain.DepositChainID, address.String()))
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	if resp.StatusCode == 200 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
 		data := &types.SourcifyContractMetadata{}
 		err = json.Unmarshal(body, data)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
 		abiString, err := json.Marshal(data.Output.Abi)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
 		contractAbi, err := abi.JSON(bytes.NewReader(abiString))
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
-		return &contractAbi, nil
+		return &contractAbi, "", nil
 	} else {
-		return nil, fmt.Errorf("sourcify contract code not found")
+		return nil, "", fmt.Errorf("sourcify contract code not found")
 	}
 
 }
 
-func getABIFromEtherscan(address common.Address) (*abi.ABI, error) {
+func getABIFromEtherscan(address common.Address) (*abi.ABI, string, error) {
 	httpClient := http.Client{
 		Timeout: time.Second * 5,
 	}
@@ -282,29 +293,29 @@ func getABIFromEtherscan(address common.Address) (*abi.ABI, error) {
 	}
 	resp, err := httpClient.Get(fmt.Sprintf("https://%s/api?module=contract&action=getsourcecode&address=%s&apikey=YourApiKeyToken", baseUrl, address.String()))
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	if resp.StatusCode == 200 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
 		data := &types.EtherscanContractMetadata{}
 		err = json.Unmarshal(body, data)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
 		contractAbi, err := abi.JSON(strings.NewReader(data.Result[0].Abi))
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
-		return &contractAbi, nil
+		return &contractAbi, data.Result[0].ContractName, nil
 	} else {
-		return nil, fmt.Errorf("sourcify contract code not found")
+		return nil, "", fmt.Errorf("sourcify contract code not found")
 	}
 
 }

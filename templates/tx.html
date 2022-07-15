@@ -46,7 +46,7 @@
                     </div>    
                     <div class="row border-bottom p-3 mx-0">
                         <div class="col-md-3">To:</div>
-                        <div class="col-md-9">{{if .TargetIsContract}}Contract {{end}}{{formatEth1AddressFull .GethTx.To}}</div>
+                        <div class="col-md-9">{{if .TargetIsContract}}Contract {{end}}{{formatEth1AddressFull .GethTx.To}} ({{.ToName}})</div>
                     </div>    
                     <div class="row p-3 mx-0">
                         <div class="col-md-3">Value:</div>
@@ -71,15 +71,23 @@
                     </div>
                     <div class="row p-3 mx-0">
                         <div class="col-md-3">Topics:</div>
-                        <div class="col-md-9">{{.Topics}}</div>
+                        <div class="col-md-9">
+                            {{range .Topics}}
+                            <div>{{.}}</div>
+                            {{end}}
+                        </div>
                     </div>
                     <div class="row p-3 mx-0">
-                        <div class="col-md-3">Data:</div>
+                        <div class="col-md-3">Data (Decoded):</div>
                         <div class="col-md-9">
-                            {{range $key, $value :=.Data}}
+                            {{range $key, $value :=.DecodedData}}
                             <div>{{$key}}: {{$value}}</div>
                             {{end}}
                         </div>
+                    </div>
+                    <div class="row p-3 mx-0">
+                        <div class="col-md-3">Data (Hex):</div>
+                        <div class="col-md-9">{{printf "0x%x" .Data}}</div>
                     </div>
                     {{end}}                
                 </div>
