@@ -1,9 +1,10 @@
-package metadata
+package eth1data
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"eth2-exporter/db"
 	"eth2-exporter/types"
 	"eth2-exporter/utils"
 	"fmt"
@@ -18,21 +19,15 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	geth_types "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	lru "github.com/hashicorp/golang-lru"
+	"github.com/go-redis/cache/v8"
 	"github.com/sirupsen/logrus"
 )
 
 var client *ethclient.Client
-var cache *lru.Cache
 
 func Init() error {
-	c, err := ethclient.Dial(utils.Config.Frontend.Metadata.Eth1Endpoint)
+	c, err := ethclient.Dial(utils.Config.Frontend.Eth1Data.Eth1ArchiveNodeEndpoint)
 
-	if err != nil {
-		return err
-	}
-
-	cache, err = lru.New(1024)
 	if err != nil {
 		return err
 	}
@@ -43,11 +38,11 @@ func Init() error {
 
 func GetEth1Transaction(hash common.Hash) (*types.Eth1TxData, error) {
 	cacheKey := fmt.Sprintf("tx:%s", hash.String())
-	cached, found := cache.Get(cacheKey)
-
-	if found {
+	wanted := &types.Eth1TxData{}
+	if err := db.RedisCache.Get(context.Background(), cacheKey, wanted); err == nil {
 		logrus.Infof("retrieved data for tx %v from cache", hash)
-		return cached.(*types.Eth1TxData), nil
+
+		return wanted, nil
 	}
 
 	tx, pending, err := client.TransactionByHash(context.Background(), hash)
@@ -70,10 +65,17 @@ func GetEth1Transaction(hash common.Hash) (*types.Eth1TxData, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving receipt data for tx %v: %v", hash, err)
 	}
+
 	txPageData.Receipt = receipt
 	txPageData.TxFee = new(big.Int).Mul(tx.GasPrice(), new(big.Int).SetUint64(receipt.GasUsed))
 
-	code, err := GetCodeAt(*tx.To())
+	txPageData.To = tx.To()
+
+	if txPageData.To == nil {
+		txPageData.To = &receipt.ContractAddress
+		txPageData.IsContractCreation = true
+	}
+	code, err := GetCodeAt(*txPageData.To)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving code data for tx %v receipient %v: %v", hash, tx.To(), err)
 	}
@@ -93,7 +95,7 @@ func GetEth1Transaction(hash common.Hash) (*types.Eth1TxData, error) {
 
 	if len(receipt.Logs) > 0 {
 		for _, log := range receipt.Logs {
-			contractAbi, name, err := GetABIForContract(log.Address)
+			meta, err := GetMetadataForContract(log.Address)
 
 			if err != nil {
 				logrus.Errorf("error retrieving abi for contract %v: %v", tx.To(), err)
@@ -107,10 +109,10 @@ func GetEth1Transaction(hash common.Hash) (*types.Eth1TxData, error) {
 
 				txPageData.Events = append(txPageData.Events, eth1Event)
 			} else {
-				txPageData.ToName = name
-				boundContract := bind.NewBoundContract(*tx.To(), *contractAbi, nil, nil, nil)
+				txPageData.ToName = meta.Name
+				boundContract := bind.NewBoundContract(*txPageData.To, *meta.ABI, nil, nil, nil)
 
-				for name, event := range contractAbi.Events {
+				for name, event := range meta.ABI.Events {
 					if bytes.Equal(event.ID.Bytes(), log.Topics[0].Bytes()) {
 						logData := make(map[string]interface{})
 						err := boundContract.UnpackLogIntoMap(logData, name, *log)
@@ -133,7 +135,6 @@ func GetEth1Transaction(hash common.Hash) (*types.Eth1TxData, error) {
 
 						txPageData.Events = append(txPageData.Events, eth1Event)
 					}
-
 				}
 			}
 		}
@@ -146,18 +147,26 @@ func GetEth1Transaction(hash common.Hash) (*types.Eth1TxData, error) {
 		// }
 	}
 
-	// cache.Add(cacheKey, txPageData)
+	err = db.RedisCache.Set(&cache.Item{
+		Ctx:   context.Background(),
+		Key:   cacheKey,
+		Value: txPageData,
+		TTL:   0,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error writing data for tx %v to cache: %v", hash, err)
+	}
 
 	return txPageData, nil
 }
 
 func GetCodeAt(address common.Address) ([]byte, error) {
 	cacheKey := fmt.Sprintf("a:%s", address.String())
-	cached, found := cache.Get(cacheKey)
-
-	if found {
+	wanted := []byte{}
+	if err := db.RedisCache.Get(context.Background(), cacheKey, &wanted); err == nil {
 		logrus.Infof("retrieved code data for address %v from cache", address)
-		return cached.([]byte), nil
+
+		return wanted, nil
 	}
 
 	code, err := client.CodeAt(context.Background(), address, nil)
@@ -165,18 +174,26 @@ func GetCodeAt(address common.Address) ([]byte, error) {
 		return nil, fmt.Errorf("error retrieving code data for address %v: %v", address, err)
 	}
 
-	cache.Add(cacheKey, code)
+	err = db.RedisCache.Set(&cache.Item{
+		Ctx:   context.Background(),
+		Key:   cacheKey,
+		Value: code,
+		TTL:   0,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error writing code data for address %v to cache: %v", address, err)
+	}
 
 	return code, nil
 }
 
 func GetBlockHeaderByHash(hash common.Hash) (*geth_types.Header, error) {
 	cacheKey := fmt.Sprintf("h:%s", hash.String())
-	cached, found := cache.Get(cacheKey)
 
-	if found {
+	wanted := &geth_types.Header{}
+	if err := db.RedisCache.Get(context.Background(), cacheKey, &wanted); err == nil {
 		logrus.Infof("retrieved header data for block %v from cache", hash)
-		return cached.(*geth_types.Header), nil
+		return wanted, nil
 	}
 
 	header, err := client.HeaderByHash(context.Background(), hash)
@@ -184,18 +201,26 @@ func GetBlockHeaderByHash(hash common.Hash) (*geth_types.Header, error) {
 		return nil, fmt.Errorf("error retrieving block header data for tx %v: %v", hash, err)
 	}
 
-	cache.Add(cacheKey, header)
+	err = db.RedisCache.Set(&cache.Item{
+		Ctx:   context.Background(),
+		Key:   cacheKey,
+		Value: header,
+		TTL:   0,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error writing header data for block %v to cache: %v", hash, err)
+	}
 
 	return header, nil
 }
 
 func GetTransactionReceipt(hash common.Hash) (*geth_types.Receipt, error) {
 	cacheKey := fmt.Sprintf("r:%s", hash.String())
-	cached, found := cache.Get(cacheKey)
 
-	if found {
+	wanted := &geth_types.Receipt{}
+	if err := db.RedisCache.Get(context.Background(), cacheKey, &wanted); err == nil {
 		logrus.Infof("retrieved receipt data for tx %v from cache", hash)
-		return cached.(*geth_types.Receipt), nil
+		return wanted, nil
 	}
 
 	receipt, err := client.TransactionReceipt(context.Background(), hash)
@@ -203,21 +228,32 @@ func GetTransactionReceipt(hash common.Hash) (*geth_types.Receipt, error) {
 		return nil, fmt.Errorf("error retrieving receipt data for tx %v: %v", hash, err)
 	}
 
-	cache.Add(cacheKey, receipt)
+	err = db.RedisCache.Set(&cache.Item{
+		Ctx:   context.Background(),
+		Key:   cacheKey,
+		Value: receipt,
+		TTL:   0,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error writing receipt data for tx %v to cache: %v", hash, err)
+	}
 
 	return receipt, nil
 }
 
-func GetABIForContract(address common.Address) (*abi.ABI, string, error) {
-	cacheKey := fmt.Sprintf("abi:%s", address.String())
-	cached, found := cache.Get(cacheKey)
-	if found {
-		logrus.Infof("retrieved contract abi for address %v from cache", address)
+func GetMetadataForContract(address common.Address) (*types.AddressMetadata, error) {
+	cacheKey := fmt.Sprintf("meta:%s", address.String())
 
-		if cached == nil {
-			return nil, "", fmt.Errorf("contract abi not found")
+	wanted := &types.AddressMetadata{}
+	if err := db.RedisCache.Get(context.Background(), cacheKey, wanted); err == nil {
+
+		if wanted.ABI == nil {
+			return nil, fmt.Errorf("contract abi not found")
 		}
-		return cached.(*abi.ABI), "", nil
+		logrus.Infof("retrieved metadata for address %v from cache", address)
+		return wanted, nil
+	} else if err != cache.ErrCacheMiss {
+		logrus.Fatal(err)
 	}
 
 	//Retrieve metadata.json from sourcify
@@ -231,15 +267,47 @@ func GetABIForContract(address common.Address) (*abi.ABI, string, error) {
 
 		if err != nil {
 			logrus.Errorf("failed to get abi for contract %v from etherscan: %v", address, err)
-			cache.Add(cacheKey, nil)
-			return nil, "", fmt.Errorf("contract abi not found")
+			err = db.RedisCache.Set(&cache.Item{
+				Ctx:   context.Background(),
+				Key:   cacheKey,
+				Value: "",
+				TTL:   time.Hour * 24,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("error writing addresss metadata for address %v to cache: %v", address, err)
+			}
+			return nil, fmt.Errorf("contract abi not found")
 		}
-		cache.Add(cacheKey, abi)
-		return abi, name, nil
+		meta := &types.AddressMetadata{
+			ABI:  abi,
+			Name: name,
+		}
+		err = db.RedisCache.Set(&cache.Item{
+			Ctx:   context.Background(),
+			Key:   cacheKey,
+			Value: meta,
+			TTL:   time.Hour * 24,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error writing addresss metadata for address %v to cache: %v", address, err)
+		}
+		return meta, nil
 	}
 
-	cache.Add(cacheKey, abi)
-	return abi, name, nil
+	meta := &types.AddressMetadata{
+		ABI:  abi,
+		Name: name,
+	}
+	err = db.RedisCache.Set(&cache.Item{
+		Ctx:   context.Background(),
+		Key:   cacheKey,
+		Value: meta,
+		TTL:   time.Hour * 24,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error writing addresss metadata for address %v to cache: %v", address, err)
+	}
+	return meta, nil
 }
 
 func getABIFromSourcify(address common.Address) (*abi.ABI, string, error) {
@@ -278,7 +346,6 @@ func getABIFromSourcify(address common.Address) (*abi.ABI, string, error) {
 	} else {
 		return nil, "", fmt.Errorf("sourcify contract code not found")
 	}
-
 }
 
 func getABIFromEtherscan(address common.Address) (*abi.ABI, string, error) {
@@ -291,7 +358,7 @@ func getABIFromEtherscan(address common.Address) (*abi.ABI, string, error) {
 	if utils.Config.Chain.DepositChainID == 5 {
 		baseUrl = "api-goerli.etherscan.io"
 	}
-	resp, err := httpClient.Get(fmt.Sprintf("https://%s/api?module=contract&action=getsourcecode&address=%s&apikey=YourApiKeyToken", baseUrl, address.String()))
+	resp, err := httpClient.Get(fmt.Sprintf("https://%s/api?module=contract&action=getsourcecode&address=%s&apikey=%s", baseUrl, address.String(), utils.Config.Frontend.Eth1Data.EtherscanAPIKey))
 	if err != nil {
 		return nil, "", err
 	}
@@ -315,7 +382,6 @@ func getABIFromEtherscan(address common.Address) (*abi.ABI, string, error) {
 
 		return &contractAbi, data.Result[0].ContractName, nil
 	} else {
-		return nil, "", fmt.Errorf("sourcify contract code not found")
+		return nil, "", fmt.Errorf("etherscan contract code not found")
 	}
-
 }

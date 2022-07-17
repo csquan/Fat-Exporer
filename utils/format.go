@@ -878,7 +878,7 @@ func FormatTimestampUInt64(ts uint64) template.HTML {
 
 // FormatEth1AddressFull will return the eth1-address formated as html
 func FormatEth1AddressFull(addr common.Address) template.HTML {
-	copyBtn := CopyButton(addr.String())
+	copyBtn := CopyButton(strings.ReplaceAll(addr.String(), "0x", ""))
 
 	if !Config.Chain.Mainnet {
 		return template.HTML(fmt.Sprintf("<a href=\"https://goerli.etherscan.io/address/0x%x\" class=\"text-monospace\">%s</a>%s", addr, addr.String(), copyBtn))

@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/hex"
 	"encoding/json"
-	"eth2-exporter/metadata"
+	"eth2-exporter/eth1data"
 	"eth2-exporter/utils"
 	"fmt"
 	"html/template"
@@ -46,7 +46,7 @@ func Tx(w http.ResponseWriter, r *http.Request) {
 	data.Meta.Title = fmt.Sprintf("%v - Tx 0x%x - beaconcha.in - %v", utils.Config.Frontend.SiteName, txHash, time.Now().Year())
 	data.Meta.Path = fmt.Sprintf("/tx/0x%x", txHash)
 
-	txData, err := metadata.GetEth1Transaction(common.BytesToHash(txHash))
+	txData, err := eth1data.GetEth1Transaction(common.BytesToHash(txHash))
 
 	if err != nil {
 		data.Meta.Title = fmt.Sprintf("%v - Transaction %v - beaconcha.in - %v", utils.Config.Frontend.SiteName, txHashString, time.Now().Year())

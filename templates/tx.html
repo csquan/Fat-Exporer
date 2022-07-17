@@ -46,7 +46,13 @@
                     </div>    
                     <div class="row border-bottom p-3 mx-0">
                         <div class="col-md-3">To:</div>
-                        <div class="col-md-9">{{if .TargetIsContract}}Contract {{end}}{{formatEth1AddressFull .GethTx.To}} ({{.ToName}})</div>
+                        <div class="col-md-9">
+                            {{if .IsContractCreation}}
+                                [Contract {{formatEth1AddressFull .To}}{{if ne .ToName ""}} ({{.ToName}}){{end}} Created]
+                            {{else}}
+                                {{if .TargetIsContract}}Contract {{end}}{{formatEth1AddressFull .To}}{{if ne .ToName ""}} ({{.ToName}}){{end}}
+                            {{end}}
+                        </div>
                     </div>    
                     <div class="row p-3 mx-0">
                         <div class="col-md-3">Value:</div>

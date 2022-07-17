@@ -3,22 +3,25 @@ package types
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	geth_types "github.com/ethereum/go-ethereum/core/types"
 )
 
 // TxPageData is a struct to hold detailed tx data for the tx page
 type Eth1TxData struct {
-	From             common.Address
-	FromName         string
-	ToName           string
-	GethTx           *geth_types.Transaction
-	Receipt          *geth_types.Receipt
-	Header           *geth_types.Header
-	IsPending        bool
-	TargetIsContract bool
-	TxFee            *big.Int
-	Events           []*Eth1EventData
+	From               common.Address
+	To                 *common.Address
+	FromName           string
+	ToName             string
+	GethTx             *geth_types.Transaction
+	Receipt            *geth_types.Receipt
+	Header             *geth_types.Header
+	IsPending          bool
+	TargetIsContract   bool
+	IsContractCreation bool
+	TxFee              *big.Int
+	Events             []*Eth1EventData
 }
 
 type Eth1EventData struct {
@@ -126,4 +129,9 @@ type EtherscanContractMetadata struct {
 		SwarmSource          string `json:"SwarmSource"`
 	} `json:"result"`
 	Status string `json:"status"`
+}
+
+type AddressMetadata struct {
+	ABI  *abi.ABI
+	Name string
 }

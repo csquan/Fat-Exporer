@@ -150,9 +150,11 @@ type Config struct {
 		PoolsUpdater struct {
 			Enabled bool `yaml:"enabled" envconfig:"FRONTEND_POOLS_UPDATER"`
 		} `yaml:"poolsUpdater"`
-		Metadata struct {
-			Eth1Endpoint string `yaml:"eth1Endpoint" envconfig:"FRONTEND_METADATA_ETH1_ENDPOINT"`
-		}
+		Eth1Data struct {
+			Eth1ArchiveNodeEndpoint string `yaml:"eth1ArchiveNodeEndpoint" envconfig:"FRONTEND_ETH1DATA_ETH1_ARCHIVE_NODE_ENDPOINT"`
+			RedisCacheEndpoint      string `yaml:"redisCacheEndpoint" envconfig:"FRONTEND_ETH1DATA_REDIS_CACHE_ENDPOINT"`
+			EtherscanAPIKey         string `yaml:"etherscanAPIKey" envconfig:"FRONTEND_ETH1DATA_ETHERSCAN_API_KEY_ENDPOINT"`
+		} `yaml:"eth1data"`
 	} `yaml:"frontend"`
 	Metrics struct {
 		Enabled bool   `yaml:"enabled" envconfig:"METRICS_ENABLED"`
