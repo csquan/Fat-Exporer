@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -25,6 +26,15 @@ func main() {
 		logrus.Fatalf("error connecting to bigtable: %v", err)
 	}
 	defer bt.Close()
+
+	lastBlock, err := bt.GetLastBlock()
+
+	if err != nil {
+		logrus.Fatalf("error retrieving last block from the db: %v", err)
+	}
+	logrus.Infof("retrieved last block with number %v and hash %x", lastBlock.Number, lastBlock.Hash)
+	spew.Dump(lastBlock)
+	return
 
 	client, err := rpc.NewErigonClient(*erigonEndpoint)
 
