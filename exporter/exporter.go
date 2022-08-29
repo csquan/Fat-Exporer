@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 var logger = logrus.New().WithField("module", "exporter")
@@ -492,50 +493,60 @@ func ExportEpoch(epoch uint64, client rpc.Client) error {
 	}
 
 	// export epoch data to bigtable
-	err = db.BigtableClient.SaveValidatorBalances(epoch, data.Validators)
-	if err != nil {
-		return fmt.Errorf("error exporting validator balances to bigtable: %v", err)
-	}
-	err = db.BigtableClient.SaveAttestationAssignments(epoch, data.ValidatorAssignmentes.AttestorAssignments)
-	if err != nil {
-		return fmt.Errorf("error exporting attestation assignments to bigtable: %v", err)
-	}
-	err = db.BigtableClient.SaveProposalAssignments(epoch, data.ValidatorAssignmentes.ProposerAssignments)
-	if err != nil {
-		return fmt.Errorf("error exporting proposal assignments to bigtable: %v", err)
-	}
-	err = db.BigtableClient.SaveAttestations(data.Blocks)
-	if err != nil {
-		return fmt.Errorf("error exporting attestations to bigtable: %v", err)
-	}
-	err = db.BigtableClient.SaveProposals(data.Blocks)
-	if err != nil {
-		return fmt.Errorf("error exporting proposals to bigtable: %v", err)
-	}
-	err = db.BigtableClient.SaveSyncComitteeDuties(data.Blocks)
-	if err != nil {
-		return fmt.Errorf("error exporting sync committe duties to bigtable: %v", err)
-	}
+	g := new(errgroup.Group)
 
-	attestedSlots := make(map[uint64]uint64)
-	for _, blockkv := range data.Blocks {
-		for _, block := range blockkv {
-			for _, attestation := range block.Attestations {
-				for _, validator := range attestation.Attesters {
-					if block.Slot > attestedSlots[validator] {
-						attestedSlots[validator] = block.Slot
+	g.Go(func() error {
+		err = db.BigtableClient.SaveValidatorBalances(epoch, data.Validators)
+		if err != nil {
+			return fmt.Errorf("error exporting validator balances to bigtable: %v", err)
+		}
+		err = db.BigtableClient.SaveAttestationAssignments(epoch, data.ValidatorAssignmentes.AttestorAssignments)
+		if err != nil {
+			return fmt.Errorf("error exporting attestation assignments to bigtable: %v", err)
+		}
+		err = db.BigtableClient.SaveProposalAssignments(epoch, data.ValidatorAssignmentes.ProposerAssignments)
+		if err != nil {
+			return fmt.Errorf("error exporting proposal assignments to bigtable: %v", err)
+		}
+		err = db.BigtableClient.SaveAttestations(data.Blocks)
+		if err != nil {
+			return fmt.Errorf("error exporting attestations to bigtable: %v", err)
+		}
+		err = db.BigtableClient.SaveProposals(data.Blocks)
+		if err != nil {
+			return fmt.Errorf("error exporting proposals to bigtable: %v", err)
+		}
+		err = db.BigtableClient.SaveSyncComitteeDuties(data.Blocks)
+		if err != nil {
+			return fmt.Errorf("error exporting sync committe duties to bigtable: %v", err)
+		}
+
+		return nil
+	})
+
+	g.Go(func() error {
+		attestedSlots := make(map[uint64]uint64)
+		for _, blockkv := range data.Blocks {
+			for _, block := range blockkv {
+				for _, attestation := range block.Attestations {
+					for _, validator := range attestation.Attesters {
+						if block.Slot > attestedSlots[validator] {
+							attestedSlots[validator] = block.Slot
+						}
 					}
 				}
 			}
 		}
-	}
 
-	err = services.SetLastAttestationSlots(attestedSlots)
-	if err != nil {
-		return fmt.Errorf("error settings last attestation slots for epoch %v: %v", data.Epoch, err)
-	}
+		err = services.SetLastAttestationSlots(attestedSlots)
+		if err != nil {
+			return fmt.Errorf("error settings last attestation slots for epoch %v: %v", data.Epoch, err)
+		}
 
-	return db.SaveEpoch(data)
+		return db.SaveEpoch(data)
+	})
+
+	return g.Wait()
 }
 
 func exportValidatorQueue(client rpc.Client) error {
