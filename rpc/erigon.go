@@ -134,7 +134,7 @@ func (client *ErigonClient) GetBlock(number int64) (*types.Eth1Block, *types.Get
 			From:                 msg.From().Bytes(),
 			ChainId:              tx.ChainId().Bytes(),
 			AccessList:           []*types.Eth1Transaction_AccessList{},
-			Hash:                 []byte{},
+			Hash:                 tx.Hash().Bytes(),
 			Itx:                  []*types.Eth1InternalTransaction{},
 		}
 
