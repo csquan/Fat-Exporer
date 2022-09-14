@@ -2035,6 +2035,11 @@ func GetValidatorsGotSlashed(epoch uint64) ([]struct {
 	return dbResult, nil
 }
 
+func GetRecentBlocks(latestEpoch uint64) ([]*types.Block, error) {
+
+	return nil, nil
+}
+
 func GetSlotVizData(latestEpoch uint64) ([]*types.SlotVizEpochs, error) {
 	type sqlBlocks struct {
 		Slot                    uint64

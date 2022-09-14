@@ -147,15 +147,21 @@ func main() {
 		logrus.Fatal("invalid chain configuration specified, you must specify the slots per epoch, seconds per slot and genesis timestamp in the config file")
 	}
 
-	if utils.Config.Indexer.Enabled {
+	var rpcClient rpc.Client
+	if utils.Config.LighthouseEndpoint != "" {
+		chainID := new(big.Int).SetUint64(utils.Config.Chain.Config.DepositChainID)
+		rpcClient, err = rpc.NewLighthouseClient(utils.Config.LighthouseEndpoint, chainID)
+		if err != nil {
+			logrus.Fatal(err)
+		}
+	}
 
+	if utils.Config.Indexer.Enabled {
 		err = services.InitLastAttestationCache(utils.Config.LastAttestationCachePath)
 
 		if err != nil {
 			logrus.Fatalf("error initializing last attesation cache: %v", err)
 		}
-
-		var rpcClient rpc.Client
 
 		chainID := new(big.Int).SetUint64(utils.Config.Chain.Config.DepositChainID)
 		if utils.Config.Indexer.Node.Type == "prysm" {
@@ -167,7 +173,7 @@ func main() {
 			if err != nil {
 				logrus.Fatal(err)
 			}
-		} else if utils.Config.Indexer.Node.Type == "lighthouse" {
+		} else if utils.Config.Indexer.Node.Type == "lighthouse" && utils.Config.LighthouseEndpoint == "" {
 			rpcClient, err = rpc.NewLighthouseClient("http://"+cfg.Indexer.Node.Host+":"+cfg.Indexer.Node.Port, chainID)
 			if err != nil {
 				logrus.Fatal(err)
@@ -273,7 +279,7 @@ func main() {
 		router.HandleFunc("/api/healthz-loadbalancer", handlers.ApiHealthzLoadbalancer).Methods("GET", "HEAD")
 
 		logrus.Infof("initializing frontend services")
-		services.Init() // Init frontend services
+		services.Init(&rpcClient) // Init frontend services
 		logrus.Infof("frontend services initiated")
 
 		logrus.Infof("initializing prices")

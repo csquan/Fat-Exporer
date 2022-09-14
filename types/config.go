@@ -36,6 +36,7 @@ type Config struct {
 	Eth1GethEndpoint   string `yaml:"eth1GethEndpoint" envconfig:"ETH1_GETH_ENDPOINT"`
 	EtherscanAPIKey    string `yaml:"etherscanApiKey" envconfig:"ETHERSCAN_API_KEY"`
 	RedisCacheEndpoint string `yaml:"redicCacheEndpoint" envconfig:"REDIC_CACHE_ENDPOINT"`
+	LighthouseEndpoint string `yaml:"lighthouseEndpoint" envConfig:"LIGHTHOUSE_ENDPOINT"`
 	Indexer            struct {
 		Enabled                     bool `yaml:"enabled" envconfig:"INDEXER_ENABLED"`
 		FixCanonOnStartup           bool `yaml:"fixCanonOnStartup" envconfig:"INDEXER_FIX_CANON_ON_STARTUP"`
@@ -62,6 +63,9 @@ type Config struct {
 			Enabled bool `yaml:"enabled" envconfig:"PUBKEY_TAGS_EXPORTER_ENABLED"`
 		} `yaml:"pubkeyTagsExporter"`
 	} `yaml:"indexer"`
+	Services struct {
+		Enabled bool `yaml:"enabled" envconfig:"SERVICES_ENABLED"`
+	}
 	Frontend struct {
 		TokenListPath                  string `yaml:"tokenListPath" envconfig:"FRONTEND_TOKEN_LIST_PATH"`
 		Debug                          bool   `yaml:"debug" envconfig:"FRONTEND_DEBUG"`

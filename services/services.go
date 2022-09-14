@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"eth2-exporter/db"
 	"eth2-exporter/price"
+	"eth2-exporter/rpc"
 	"eth2-exporter/types"
 	"eth2-exporter/utils"
 	"fmt"
@@ -25,6 +26,7 @@ import (
 var latestEpoch uint64
 var latestFinalizedEpoch uint64
 var latestSlot uint64
+var latestSlots atomic.Value
 var latestProposedSlot uint64
 var latestValidatorCount uint64
 var indexPageData atomic.Value
@@ -41,7 +43,7 @@ var SlotVizMetrics atomic.Value
 var logger = logrus.New().WithField("module", "services")
 
 // Init will initialize the services
-func Init() {
+func Init(rpcClient *rpc.Client) {
 	ready := &sync.WaitGroup{}
 	ready.Add(1)
 	go epochUpdater(ready)
@@ -54,6 +56,9 @@ func Init() {
 
 	ready.Add(1)
 	go latestBlockUpdater(ready)
+
+	ready.Add(1)
+	go latestSlotsUpdater(ready, rpcClient)
 
 	// ready.Add(1)
 	// go gasNowUpdater()
@@ -202,6 +207,33 @@ func latestProposedSlotUpdater(wg *sync.WaitGroup) {
 			}
 		}
 		time.Sleep(time.Second)
+	}
+}
+
+func latestSlotsUpdater(wg *sync.WaitGroup, rpcClient *rpc.Client) {
+	firstRun := true
+
+	// for {
+	// 	var slot uint64
+	// 	err := db.WriterDb.Get(&slot, "SELECT COALESCE(MAX(slot), 0) FROM blocks WHERE status = '1'")
+
+	// 	if err != nil {
+	// 		logger.Errorf("error retrieving latest proposed slot from the database: %v", err)
+	// 	} else {
+	// 		atomic.StoreUint64(&latestProposedSlot, slot)
+	// 		if firstRun {
+	// 			logger.Info("initialized last proposed slot updater")
+	// 			wg.Done()
+	// 			firstRun = false
+	// 		}
+	// 	}
+	// 	time.Sleep(time.Second)
+	// }
+
+	if firstRun {
+		logger.Info("initialized last proposed slot updater")
+		wg.Done()
+		firstRun = false
 	}
 }
 
@@ -427,6 +459,23 @@ func getIndexPageData() (*types.IndexPageData, error) {
 	for _, block := range blocks {
 		if blocksMap[block.Slot] == nil || len(block.BlockRoot) > len(blocksMap[block.Slot].BlockRoot) {
 			blocksMap[block.Slot] = block
+		}
+	}
+	highestSlot := blocks[0]
+	for i := highestSlot.Slot - 1; i >= highestSlot.Slot-21; i-- {
+		if blocksMap[i] == nil {
+			epoch := highestSlot.Epoch
+			if i%32 == 0 {
+				epoch -= 1
+			}
+			blocksMap[i] = &types.IndexPageDataBlocks{
+				Epoch:              epoch,
+				Slot:               i,
+				Status:             0,
+				StatusFormatted:    utils.FormatBlockStatus(0),
+				ProposerFormatted:  template.HTML(`<span class="badge badge-pill bg-light text-dark">-</span>`),
+				BlockRootFormatted: "-",
+			}
 		}
 	}
 	blocks = make([]*types.IndexPageDataBlocks, 0, len(blocks))
