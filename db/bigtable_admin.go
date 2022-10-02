@@ -4,7 +4,9 @@ import (
 	"context"
 	"eth2-exporter/cache"
 	"eth2-exporter/utils"
+	"fmt"
 	"log"
+	"os"
 	"time"
 
 	gcp_bigtable "cloud.google.com/go/bigtable"
@@ -68,6 +70,115 @@ func (admin *BigtableAdmin) SetupBigtableCache() error {
 	for _, cf := range CacheTable.ColFams {
 		if err := admin.client.SetGCPolicy(ctx, CacheTable.Name, cf.Name, cf.Policy); err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+func (admin *BigtableAdmin) SetupBigtableWindow() error {
+	if os.Getenv("BIGTABLE_EMULATOR_HOST") == "" {
+		return fmt.Errorf("error the bigtable emulator environment variable is not set")
+	}
+
+	tables := []CreateTables{
+		{
+			"window_data",
+			[]CreateFamily{
+				{
+					Name:   DEFAULT_FAMILY,
+					Policy: gcp_bigtable.UnionPolicy(gcp_bigtable.MaxVersionsPolicy(1), gcp_bigtable.MaxAgePolicy(time.Hour*24)),
+				},
+				{
+					Name:   DEFAULT_FAMILY_BLOCKS,
+					Policy: gcp_bigtable.UnionPolicy(gcp_bigtable.MaxVersionsPolicy(1), gcp_bigtable.MaxAgePolicy(time.Hour*24)),
+				},
+			},
+		}, {
+			"window_blocks",
+			[]CreateFamily{
+				{
+					Name:   DEFAULT_FAMILY,
+					Policy: gcp_bigtable.UnionPolicy(gcp_bigtable.MaxVersionsPolicy(1), gcp_bigtable.MaxAgePolicy(time.Hour*24)),
+				},
+				{
+					Name:   DEFAULT_FAMILY_BLOCKS,
+					Policy: gcp_bigtable.UnionPolicy(gcp_bigtable.MaxVersionsPolicy(1), gcp_bigtable.MaxAgePolicy(time.Hour*24)),
+				},
+			},
+		},
+		{
+			"window_metadata",
+			[]CreateFamily{
+				{
+					Name:   ACCOUNT_METADATA_FAMILY,
+					Policy: gcp_bigtable.UnionPolicy(gcp_bigtable.MaxVersionsPolicy(1), gcp_bigtable.MaxAgePolicy(time.Hour*24)),
+				},
+				{
+					Name:   CONTRACT_METADATA_FAMILY,
+					Policy: gcp_bigtable.UnionPolicy(gcp_bigtable.MaxVersionsPolicy(1), gcp_bigtable.MaxAgePolicy(time.Hour*24)),
+				},
+				{
+					Name:   ERC20_METADATA_FAMILY,
+					Policy: gcp_bigtable.UnionPolicy(gcp_bigtable.MaxVersionsPolicy(1), gcp_bigtable.MaxAgePolicy(time.Hour*24)),
+				},
+				{
+					Name:   ERC721_METADATA_FAMILY,
+					Policy: gcp_bigtable.UnionPolicy(gcp_bigtable.MaxVersionsPolicy(1), gcp_bigtable.MaxAgePolicy(time.Hour*24)),
+				},
+				{
+					Name:   ERC1155_METADATA_FAMILY,
+					Policy: gcp_bigtable.UnionPolicy(gcp_bigtable.MaxVersionsPolicy(1), gcp_bigtable.MaxAgePolicy(time.Hour*24)),
+				},
+			},
+		},
+		{
+			"window_metadata_updates",
+			[]CreateFamily{
+				{
+					Name:   METADATA_UPDATES_FAMILY_BLOCKS,
+					Policy: gcp_bigtable.UnionPolicy(gcp_bigtable.MaxVersionsPolicy(1), gcp_bigtable.MaxAgePolicy(time.Hour*24)),
+				},
+			},
+		},
+		{
+			"window_beaconchain",
+			[]CreateFamily{
+				{
+					Name:   DEFAULT_FAMILY,
+					Policy: gcp_bigtable.UnionPolicy(gcp_bigtable.MaxVersionsPolicy(1), gcp_bigtable.MaxAgePolicy(time.Hour*24)),
+				},
+				{
+					Name:   VALIDATOR_BALANCES_FAMILY,
+					Policy: gcp_bigtable.UnionPolicy(gcp_bigtable.MaxVersionsPolicy(1), gcp_bigtable.MaxAgePolicy(time.Hour*24)),
+				},
+				{
+					Name:   PROPOSALS_FAMILY,
+					Policy: gcp_bigtable.UnionPolicy(gcp_bigtable.MaxVersionsPolicy(1), gcp_bigtable.MaxAgePolicy(time.Hour*24)),
+				},
+				{
+					Name:   SYNC_COMMITTEES_FAMILY,
+					Policy: gcp_bigtable.UnionPolicy(gcp_bigtable.MaxVersionsPolicy(1), gcp_bigtable.MaxAgePolicy(time.Hour*24)),
+				},
+				{
+					Name:   ATTESTATIONS_FAMILY,
+					Policy: gcp_bigtable.UnionPolicy(gcp_bigtable.MaxVersionsPolicy(1), gcp_bigtable.MaxAgePolicy(time.Hour*24)),
+				},
+			},
+		},
+	}
+
+	for _, table := range tables {
+		if err := admin.createTables([]CreateTables{table}); err != nil {
+			return fmt.Errorf("error creating table: %s, err: %w", table.Name, err)
+		}
+		ctx, done := context.WithTimeout(context.Background(), time.Second*30)
+		defer done()
+
+		for _, cf := range CacheTable.ColFams {
+			if err := admin.client.SetGCPolicy(ctx, CacheTable.Name, cf.Name, cf.Policy); err != nil {
+				return err
+			}
 		}
 	}
 
