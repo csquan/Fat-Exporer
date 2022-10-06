@@ -172,6 +172,7 @@ func FormatBalanceShort(balanceInt uint64, currency string) template.HTML {
 func FormatAddCommas(n uint64) template.HTML {
 	number := FormatFloat(float64(n), 2)
 
+	number = strings.ReplaceAll(number, ",", `<span class="thousands-separator"></span>`)
 	return template.HTML(number)
 }
 
@@ -1034,7 +1035,7 @@ func ToBase64(input []byte) string {
 // FormatBalance will return a string for a balance
 func FormatBalanceWei(balanceWei *big.Int, unit string) template.HTML {
 	balanceBigFloat := new(big.Float).SetInt(balanceWei)
-	if unit == "Ether" {
+	if unit == "Ether" || unit == "ETH" {
 		balanceBigFloat = new(big.Float).Quo(balanceBigFloat, big.NewFloat(1e18))
 	} else if unit == "GWei" {
 		balanceBigFloat = new(big.Float).Quo(balanceBigFloat, big.NewFloat(1e9))
@@ -1045,16 +1046,7 @@ func FormatBalanceWei(balanceWei *big.Int, unit string) template.HTML {
 	return template.HTML(balance + " " + unit)
 }
 func FormatBytesAmount(amount []byte, unit string) template.HTML {
-	balanceBigFloat := new(big.Float).SetInt(new(big.Int).SetBytes(amount))
-	if unit == "Ether" {
-		balanceBigFloat = new(big.Float).Quo(balanceBigFloat, big.NewFloat(1e18))
-	} else if unit == "GWei" {
-		balanceBigFloat = new(big.Float).Quo(balanceBigFloat, big.NewFloat(1e9))
-	}
-	balanceFloat, _ := balanceBigFloat.Float64()
-	balance := FormatFloat(balanceFloat, 8)
-
-	return template.HTML(balance + " " + unit)
+	return FormatBalanceWei(new(big.Int).SetBytes(amount), unit)
 }
 
 // FormatBalance will return a string for a balance
