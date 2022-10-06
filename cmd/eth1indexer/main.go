@@ -368,7 +368,7 @@ func HandleChainReorgs(bt *db.Bigtable, client *rpc.ErigonClient, depth int) err
 		}
 
 		if !bytes.Equal(nodeBlock.Hash().Bytes(), dbBlock.Hash) {
-			logrus.Warnf("found incosistency at height %v, node block hash: %x, db block hash: %x", i, nodeBlock.Hash().Bytes(), dbBlock.Hash)
+			logrus.Warnf("found inconsistency at height %v, node block hash: %x, db block hash: %x", i, nodeBlock.Hash().Bytes(), dbBlock.Hash)
 
 			// delete all blocks starting from the fork block up to the latest block in the db
 			for j := i; j <= latestNodeBlockNumber; j++ {
