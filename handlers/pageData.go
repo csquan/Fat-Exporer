@@ -4,7 +4,6 @@ import (
 	"errors"
 	ethclients "eth2-exporter/ethClients"
 	"eth2-exporter/price"
-	"eth2-exporter/services"
 	"eth2-exporter/types"
 	"eth2-exporter/utils"
 	"eth2-exporter/version"
@@ -40,9 +39,9 @@ func InitPageData(w http.ResponseWriter, r *http.Request, active, path, title st
 		ChainSlotsPerEpoch:    utils.Config.Chain.Config.SlotsPerEpoch,
 		ChainSecondsPerSlot:   utils.Config.Chain.Config.SecondsPerSlot,
 		ChainGenesisTimestamp: utils.Config.Chain.GenesisTimestamp,
-		CurrentEpoch:          services.LatestEpoch(),
-		CurrentSlot:           services.LatestSlot(),
-		FinalizationDelay:     services.FinalizationDelay(),
+		//CurrentEpoch:          services.LatestEpoch(),
+		//CurrentSlot:           services.LatestSlot(),
+		//FinalizationDelay:     services.FinalizationDelay(),
 		Rates: types.PageRates{
 			EthPrice:              0,
 			EthRoundPrice:         0,

@@ -8,6 +8,8 @@ import (
 	"eth2-exporter/types"
 	"eth2-exporter/utils"
 	"fmt"
+	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/sirupsen/logrus"
 	"math/big"
 	"regexp"
 	"sort"
@@ -19,10 +21,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/patrickmn/go-cache"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/lib/pq"
-	"github.com/sirupsen/logrus"
-
-	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 var DBPGX *pgxpool.Conn
@@ -2138,4 +2138,120 @@ func GetSlotVizData(latestEpoch uint64) ([]*types.SlotVizEpochs, error) {
 	}
 
 	return res, nil
+}
+
+// todo:限制范围
+func queryBlock(Db *sqlx.DB, number uint64) (*types.Eth1Block, error) {
+	var block types.Eth1Block
+	querySql := fmt.Sprintf("select num,block_hash,gas_used,gas_limit from block where num = %d", number)
+	rows, err := Db.Query(querySql)
+	if err != nil {
+		fmt.Printf("query faied, error:[%v]", err.Error())
+		return &block, nil
+	}
+	for rows.Next() {
+		//定义变量接收查询数据
+		err := rows.Scan(&block.Number, &block.Hash, &block.GasUsed, &block.GasLimit)
+		if err != nil {
+			fmt.Println("get data failed, error:[%v]", err.Error())
+		}
+	}
+
+	//关闭结果集（释放连接）
+	rows.Close()
+	return &block, nil
+}
+
+// todo:限制范围
+func queryDatas(Db *sqlx.DB) ([]*types.Eth1BlockIndexed, error) {
+	var blocks []*types.Eth1BlockIndexed
+	rows, err := Db.Query("select num,block_hash,txs_cnt,gas_used,gas_limit from block limit 10")
+	if err != nil {
+		fmt.Printf("query faied, error:[%v]", err.Error())
+		return nil, nil
+	}
+	for rows.Next() {
+		//定义变量接收查询数据
+		block := types.Eth1BlockIndexed{}
+		err := rows.Scan(&block.Number, &block.Hash, &block.TransactionCount, &block.GasUsed, &block.GasLimit)
+		if err != nil {
+			fmt.Println("get data failed, error:[%v]", err.Error())
+		}
+		blocks = append(blocks, &block)
+	}
+
+	//关闭结果集（释放连接）
+	rows.Close()
+	return blocks, nil
+}
+
+// todo:限制范围
+func queryTxs(Db *sqlx.DB) ([]*types.Eth1Transaction, error) {
+	var txs []*types.Eth1Transaction
+	rows, err := Db.Query("select addr_from,addr_to,tx_hash,gas_used,gas_price,tx_value from tx limit 10")
+	if err != nil {
+		fmt.Printf("query faied, error:[%v]", err.Error())
+		return nil, nil
+	}
+	for rows.Next() {
+		//定义变量接收查询数据
+		tx := types.Eth1Transaction{}
+		err := rows.Scan(&tx.From, &tx.To, &tx.Hash, &tx.GasUsed, &tx.GasPrice, &tx.Value)
+		if err != nil {
+			fmt.Println("get data failed, error:[%v]", err.Error())
+		}
+		txs = append(txs, &tx)
+	}
+
+	//关闭结果集（释放连接）
+	rows.Close()
+	return txs, nil
+}
+
+// GetBlocksDescending gets blocks starting at block start-from mysql
+func GetBlocksDescending(start, limit uint64) ([]*types.Eth1BlockIndexed, error) {
+	var blocks []*types.Eth1BlockIndexed
+
+	db, err := sqlx.Open("mysql", "root:csquan253905@tcp(127.0.0.1:3306)/block_data_test?charset=utf8")
+	if err != nil {
+
+	}
+	blocks, err = queryDatas(db)
+	if err != nil {
+
+	}
+
+	return blocks, nil
+}
+
+func GetBlockFromBlocksTable(number uint64) (*types.Eth1Block, error) {
+	db, err := sqlx.Open("mysql", "root:csquan253905@tcp(127.0.0.1:3306)/block_data_test?charset=utf8")
+	if err != nil {
+
+	}
+	block, err := queryBlock(db, number)
+	if err != nil {
+
+	}
+
+	return block, nil
+}
+
+func GetTransactions() ([]*types.Eth1Transaction, error) {
+	var txs []*types.Eth1Transaction
+
+	db, err := sqlx.Open("mysql", "root:csquan253905@tcp(127.0.0.1:3306)/block_data_test?charset=utf8")
+	if err != nil {
+
+	}
+	txs, err = queryTxs(db)
+	if err != nil {
+
+	}
+
+	txs, err = queryTxs(db)
+	if err != nil {
+
+	}
+	return txs, nil
 }

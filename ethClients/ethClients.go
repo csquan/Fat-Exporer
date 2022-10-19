@@ -76,7 +76,7 @@ var bannerClientsMux = &sync.RWMutex{}
 
 // Init starts a go routine to update the ETH Clients Info
 func Init() {
-	go update()
+	//go update()
 }
 
 func fetchClientData(repo string) *gitAPIResponse {
@@ -278,7 +278,7 @@ func ClientsUpdated() bool {
 	return true
 }
 
-//GetUpdatedClients returns a slice of latest updated clients or empty slice if no updates
+// GetUpdatedClients returns a slice of latest updated clients or empty slice if no updates
 func GetUpdatedClients() []clientUpdateInfo {
 	bannerClientsMux.Lock()
 	defer bannerClientsMux.Unlock()

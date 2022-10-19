@@ -781,7 +781,7 @@ func LatestSlot() uint64 {
 	return 0
 }
 
-//FinalizationDelay will return the current Finalization Delay
+// FinalizationDelay will return the current Finalization Delay
 func FinalizationDelay() uint64 {
 	return LatestEpoch() - LatestFinalizedEpoch()
 }
@@ -800,14 +800,14 @@ func LatestProposedSlot() uint64 {
 
 // LatestIndexPageData returns the latest index page data
 func LatestIndexPageData() *types.IndexPageData {
-	wanted := &types.IndexPageData{}
-	cacheKey := fmt.Sprintf("%d:frontend:indexPageData", utils.Config.Chain.Config.DepositChainID)
+	//wanted := &types.IndexPageData{}
+	//cacheKey := fmt.Sprintf("%d:frontend:indexPageData", utils.Config.Chain.Config.DepositChainID)
 
-	if wanted, err := cache.TieredCache.GetWithLocalTimeout(cacheKey, time.Second*5, wanted); err == nil {
-		return wanted.(*types.IndexPageData)
-	} else {
-		logger.Errorf("error retrieving indexPageData from cache: %v", err)
-	}
+	//if wanted, err := cache.TieredCache.GetWithLocalTimeout(cacheKey, time.Second*5, wanted); err == nil {
+	//	return wanted.(*types.IndexPageData)
+	//} else {
+	//	logger.Errorf("error retrieving indexPageData from cache: %v", err)
+	//}
 	return &types.IndexPageData{
 		NetworkName:               "",
 		DepositContract:           "",

@@ -30,13 +30,13 @@ var fullCheckRunning = uint64(0)
 
 // Start will start the export of data from rpc into the database
 func Start(client rpc.Client) error {
-	go performanceDataUpdater()
-	go networkLivenessUpdater(client)
-	go eth1DepositsExporter()
-	go genesisDepositsExporter()
-	go checkSubscriptions()
-	go cleanupOldMachineStats()
-	go syncCommitteesExporter(client)
+	//go performanceDataUpdater()
+	//go networkLivenessUpdater(client)
+	//go eth1DepositsExporter()
+	//go genesisDepositsExporter()
+	//go checkSubscriptions()
+	//go cleanupOldMachineStats()
+	//go syncCommitteesExporter(client)
 	if utils.Config.SSVExporter.Enabled {
 		go ssvExporter()
 	}

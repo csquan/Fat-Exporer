@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/gob"
 	"encoding/hex"
-	"eth2-exporter/cache"
 	"eth2-exporter/db"
 	ethclients "eth2-exporter/ethClients"
 	"eth2-exporter/exporter"
@@ -138,35 +137,35 @@ func main() {
 		}
 	}()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		bt, err := db.InitBigtable("etherchain", "etherchain", fmt.Sprintf("%d", utils.Config.Chain.Config.DepositChainID)) //
-		if err != nil {
-			logrus.Fatalf("error connecting to bigtable: %v", err)
-		}
-		db.BigtableClient = bt
-	}()
+	//wg.Add(1)
+	//go func() {
+	//	defer wg.Done()
+	//	bt, err := db.InitBigtable("etherchain", "etherchain", fmt.Sprintf("%d", utils.Config.Chain.Config.DepositChainID)) //
+	//	if err != nil {
+	//		logrus.Fatalf("error connecting to bigtable: %v", err)
+	//	}
+	//	db.BigtableClient = bt
+	//}()
 
-	if utils.Config.TieredCacheProvider == "redis" || len(utils.Config.RedisCacheEndpoint) != 0 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			cache.MustInitTieredCache(utils.Config.RedisCacheEndpoint)
-			logrus.Infof("Tiered Cache initialized. Latest finalized epoch: %v", services.LatestFinalizedEpoch())
-
-		}()
-	}
+	//if utils.Config.TieredCacheProvider == "redis" || len(utils.Config.RedisCacheEndpoint) != 0 {
+	//	wg.Add(1)
+	//	go func() {
+	//		defer wg.Done()
+	//		cache.MustInitTieredCache(utils.Config.RedisCacheEndpoint)
+	//		logrus.Infof("Tiered Cache initialized. Latest finalized epoch: %v", services.LatestFinalizedEpoch())
+	//
+	//	}()
+	//}
 
 	wg.Wait()
-	if utils.Config.TieredCacheProvider == "bigtable" && len(utils.Config.RedisCacheEndpoint) == 0 {
-		cache.MustInitTieredCacheBigtable(db.BigtableClient.GetClient(), fmt.Sprintf("%d", utils.Config.Chain.Config.DepositChainID))
-		logrus.Infof("Tiered Cache initialized. Latest finalized epoch: %v", services.LatestFinalizedEpoch())
-	}
-
-	if utils.Config.TieredCacheProvider != "bigtable" && utils.Config.TieredCacheProvider != "redis" {
-		logrus.Fatalf("No cache provider set. Please set TierdCacheProvider (example redis, bigtable)")
-	}
+	//if utils.Config.TieredCacheProvider == "bigtable" && len(utils.Config.RedisCacheEndpoint) == 0 {
+	//	cache.MustInitTieredCacheBigtable(db.BigtableClient.GetClient(), fmt.Sprintf("%d", utils.Config.Chain.Config.DepositChainID))
+	//	logrus.Infof("Tiered Cache initialized. Latest finalized epoch: %v", services.LatestFinalizedEpoch())
+	//}
+	//
+	//if utils.Config.TieredCacheProvider != "bigtable" && utils.Config.TieredCacheProvider != "redis" {
+	//	logrus.Fatalf("No cache provider set. Please set TierdCacheProvider (example redis, bigtable)")
+	//}
 
 	defer db.ReaderDb.Close()
 	defer db.WriterDb.Close()
@@ -226,7 +225,7 @@ func main() {
 			return
 		}
 
-		go services.StartHistoricPriceService()
+		//go services.StartHistoricPriceService()
 		go exporter.Start(rpcClient)
 	}
 

@@ -158,21 +158,21 @@ func GetValidatorEarnings(validators []uint64, currency string) (*types.Validato
 
 // LatestState will return common information that about the current state of the eth2 chain
 func LatestState(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	currency := GetCurrency(r)
-	data := services.LatestState()
-	// data.Currency = currency
-	data.EthPrice = price.GetEthPrice(currency)
-	data.EthRoundPrice = price.GetEthRoundPrice(data.EthPrice)
-	data.EthTruncPrice = utils.KFormatterEthPrice(data.EthRoundPrice)
-
-	err := json.NewEncoder(w).Encode(data)
-
-	if err != nil {
-		logger.Errorf("error sending latest index page data: %v", err)
-		http.Error(w, "Internal server error", http.StatusServiceUnavailable)
-		return
-	}
+	//w.Header().Set("Content-Type", "application/json")
+	//currency := GetCurrency(r)
+	//data := services.LatestState()
+	//// data.Currency = currency
+	//data.EthPrice = price.GetEthPrice(currency)
+	//data.EthRoundPrice = price.GetEthRoundPrice(data.EthPrice)
+	//data.EthTruncPrice = utils.KFormatterEthPrice(data.EthRoundPrice)
+	//
+	//err := json.NewEncoder(w).Encode(data)
+	//
+	//if err != nil {
+	//	logger.Errorf("error sending latest index page data: %v", err)
+	//	http.Error(w, "Internal server error", http.StatusServiceUnavailable)
+	//	return
+	//}
 }
 
 func GetCurrency(r *http.Request) string {
